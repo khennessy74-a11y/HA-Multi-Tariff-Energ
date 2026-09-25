@@ -80,6 +80,11 @@ class MultiTariffEnergyCoordinator:
         stored = await self._store.async_load()
         if stored:
             self.state = accounting_state_from_storage(stored)
+        self.state.sync_source_entities(
+            self.entry.data[CONF_IMPORT_ENERGY_ENTITY],
+            self.entry.data[CONF_EXPORT_ENERGY_ENTITY],
+            self.entry.data.get(CONF_SOLAR_ENERGY_ENTITY),
+        )
         self._apply_daily_charge()
         entity_ids = [
             self.entry.data[CONF_IMPORT_ENERGY_ENTITY],
