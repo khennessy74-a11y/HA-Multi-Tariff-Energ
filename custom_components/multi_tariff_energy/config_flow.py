@@ -119,8 +119,19 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            name = user_input[CONF_TARIFF_NAME].strip()
             start = user_input[CONF_TARIFF_START]
             end = user_input[CONF_TARIFF_END]
+            if not name:
+                errors["base"] = "tariff_name_required"
+                return self.async_show_form(
+                    step_id="tariff",
+                    data_schema=self._tariff_schema(),
+                    errors=errors,
+                    description_placeholders={
+                        "count": str(len(self._tariff_windows) + 1),
+                    },
+                )
             try:
                 parse_time(start)
                 parse_time(end)
@@ -139,7 +150,7 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 self._tariff_windows.append(
                     {
-                        "name": user_input[CONF_TARIFF_NAME].strip(),
+                        "name": name,
                         "start": start,
                         "end": end,
                         "rate": user_input[CONF_TARIFF_RATE],
