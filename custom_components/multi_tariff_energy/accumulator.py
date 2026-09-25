@@ -142,3 +142,50 @@ class AccountingState:
             return value
 
         return convert(asdict(self))
+
+
+
+def _period_totals_from_dict(data: dict[str, Any]) -> PeriodTotals:
+    """Restore period totals from storage."""
+    scalar_fields = (
+        "import_kwh",
+        "export_kwh",
+        "solar_kwh",
+        "import_cost",
+        "export_credit",
+        "standing_charge",
+        "vat",
+    )
+    kwargs = {
+        field_name: Decimal(str(data.get(field_name, "0")))
+        for field_name in scalar_fields
+    }
+    kwargs["tariff_import_kwh"] = {
+        str(key): Decimal(str(value))
+        for key, value in data.get("tariff_import_kwh", {}).items()
+    }
+    kwargs["tariff_import_cost"] = {
+        str(key): Decimal(str(value))
+        for key, value in data.get("tariff_import_cost", {}).items()
+    }
+    return PeriodTotals(**kwargs)
+
+
+def accounting_state_from_storage(data: dict[str, Any]) -> AccountingState:
+    """Restore exact accounting state persisted by as_storage_dict."""
+    return AccountingState(
+        day=str(data["day"]),
+        month=str(data["month"]),
+        today=_period_totals_from_dict(data.get("today", {})),
+        month_totals=_period_totals_from_dict(data.get("month_totals", {})),
+        import_meter=MeterTracker(
+            decimal_value(data.get("import_meter", {}).get("last_value"))
+        ),
+        export_meter=MeterTracker(
+            decimal_value(data.get("export_meter", {}).get("last_value"))
+        ),
+        solar_meter=MeterTracker(
+            decimal_value(data.get("solar_meter", {}).get("last_value"))
+        ),
+        standing_charge_applied_day=data.get("standing_charge_applied_day"),
+    )
