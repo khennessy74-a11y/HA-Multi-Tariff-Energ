@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import DATA_COORDINATOR, MultiTariffEnergyCoordinator
@@ -108,6 +109,12 @@ class MultiTariffEnergySensor(SensorEntity):
         self.coordinator = coordinator
         self.entity_description = description
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
+        self._attr_device_info = DeviceInfo(
+            identifiers={("multi_tariff_energy", entry.entry_id)},
+            name=entry.title,
+            manufacturer="Multi Tariff Energy",
+            model="Energy Accounting",
+        )
         currency = entry.data.get("currency", "EUR")
         if description.device_class == SensorDeviceClass.MONETARY:
             self._attr_native_unit_of_measurement = currency
