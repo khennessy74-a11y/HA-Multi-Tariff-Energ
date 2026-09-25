@@ -201,3 +201,11 @@ def test_next_tariff_change_skips_adjacent_identical_tariff():
     assert change is not None
     assert change[0] == datetime(2026, 9, 25, 17, 0)
     assert change[1].name == "Peak"
+
+
+def test_tariff_validation_rejects_slug_collisions():
+    periods = [
+        TariffPeriod("Day Rate", parse_time("00:00"), parse_time("12:00"), Decimal("0.30")),
+        TariffPeriod("day-rate", parse_time("12:00"), parse_time("00:00"), Decimal("0.20")),
+    ]
+    assert "slug_collision" in validate_tariff_periods(periods)
