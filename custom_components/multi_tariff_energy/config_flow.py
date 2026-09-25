@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
@@ -25,21 +27,31 @@ from .const import (
     DOMAIN,
 )
 
+CONF_TARIFF_WINDOWS = "tariff_windows"
+CONF_TARIFF_NAME = "tariff_name"
+CONF_TARIFF_START = "tariff_start"
+CONF_TARIFF_END = "tariff_end"
+CONF_TARIFF_RATE = "tariff_rate"
+CONF_ADD_ANOTHER = "add_another"
+
 
 class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Multi Tariff Energy."""
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialize the config flow."""
+        self._base_data: dict[str, Any] = {}
+        self._tariff_windows: list[dict[str, Any]] = []
+
     async def async_step_user(self, user_input=None):
-        """Handle the initial step."""
+        """Collect source sensors and billing settings."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            return self.async_create_entry(
-                title=user_input[CONF_NAME],
-                data=user_input,
-            )
+            self._base_data = dict(user_input)
+            return await self.async_step_tariff()
 
         schema = vol.Schema(
             {
@@ -68,5 +80,52 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
             }
         )
-
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
+
+    async def async_step_tariff(self, user_input=None):
+        """Add one tariff time window at a time."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            start = user_input[CONF_TARIFF_START]
+            end = user_input[CONF_TARIFF_END]
+            if start == end:
+                errors["base"] = "tariff_start_equals_end"
+            else:
+                self._tariff_windows.append(
+                    {
+                        "name": user_input[CONF_TARIFF_NAME].strip(),
+                        "start": start,
+                        "end": end,
+                        "rate": user_input[CONF_TARIFF_RATE],
+                    }
+                )
+                if user_input[CONF_ADD_ANOTHER]:
+                    return await self.async_step_tariff()
+
+                data = dict(self._base_data)
+                data[CONF_TARIFF_WINDOWS] = self._tariff_windows
+                return self.async_create_entry(
+                    title=data[CONF_NAME],
+                    data=data,
+                )
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_TARIFF_NAME): str,
+                vol.Required(CONF_TARIFF_START): str,
+                vol.Required(CONF_TARIFF_END): str,
+                vol.Required(CONF_TARIFF_RATE): vol.All(
+                    vol.Coerce(float), vol.Range(min=0)
+                ),
+                vol.Required(CONF_ADD_ANOTHER, default=False): bool,
+            }
+        )
+        return self.async_show_form(
+            step_id="tariff",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={
+                "count": str(len(self._tariff_windows) + 1),
+            },
+        )
