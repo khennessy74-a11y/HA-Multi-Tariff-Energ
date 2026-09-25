@@ -55,3 +55,25 @@ def gross_cost(
 def net_cost(gross_import_cost: Decimal, export_credit: Decimal) -> Decimal:
     """Calculate net electricity cost after export credit."""
     return gross_import_cost - export_credit
+
+
+
+def tariffs_from_config(data: dict[str, object]) -> list[TariffPeriod]:
+    """Build configured tariff periods from config entry data."""
+    periods: list[TariffPeriod] = []
+    for number in range(1, 4):
+        name = data.get(f"tariff_{number}_name")
+        start = data.get(f"tariff_{number}_start")
+        end = data.get(f"tariff_{number}_end")
+        rate = data.get(f"tariff_{number}_rate")
+        if not all(value is not None for value in (name, start, end, rate)):
+            continue
+        periods.append(
+            TariffPeriod(
+                name=str(name),
+                start=parse_time(str(start)),
+                end=parse_time(str(end)),
+                rate=Decimal(str(rate)),
+            )
+        )
+    return periods
