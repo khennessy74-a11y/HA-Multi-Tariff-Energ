@@ -42,6 +42,7 @@ CONF_TARIFF_START = "tariff_start"
 CONF_TARIFF_END = "tariff_end"
 CONF_TARIFF_RATE = "tariff_rate"
 CONF_ADD_ANOTHER = "add_another"
+CONF_EDIT_TARIFFS = "edit_tariffs"
 
 
 class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -217,8 +218,14 @@ class MultiTariffEnergyOptionsFlow(config_entries.OptionsFlow):
         """Edit billing settings without recreating the integration."""
         if user_input is not None:
             self._options_base_data = dict(user_input)
-            self._options_tariff_windows = []
-            return await self.async_step_tariff()
+            edit_tariffs = bool(self._options_base_data.pop(CONF_EDIT_TARIFFS, False))
+            if edit_tariffs:
+                self._options_tariff_windows = []
+                return await self.async_step_tariff()
+            await self._async_save_options(
+                self.config_entry.data.get(CONF_TARIFF_WINDOWS, [])
+            )
+            return self.async_create_entry(title="", data={})
 
         data = self.config_entry.data
         schema = vol.Schema(
@@ -280,10 +287,25 @@ class MultiTariffEnergyOptionsFlow(config_entries.OptionsFlow):
                     CONF_BILLING_DAY,
                     default=data.get(CONF_BILLING_DAY, DEFAULT_BILLING_DAY),
                 ): vol.All(vol.Coerce(int), vol.Range(min=1, max=28)),
+                vol.Required(CONF_EDIT_TARIFFS, default=False): bool,
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)
 
+
+    async def _async_save_options(
+        self, tariff_windows: list[dict[str, Any]]
+    ) -> None:
+        """Snapshot old readings, persist changes, and reload the entry."""
+        runtime = self.hass.data.get(DOMAIN, {}).get(self.config_entry.entry_id, {})
+        coordinator = runtime.get(DATA_COORDINATOR)
+        if coordinator is not None:
+            await coordinator.async_snapshot_sources()
+        new_data = dict(self.config_entry.data)
+        new_data.update(self._options_base_data)
+        new_data[CONF_TARIFF_WINDOWS] = tariff_windows
+        self.hass.config_entries.async_update_entry(self.config_entry, data=new_data)
+        await self.hass.config_entries.async_reload(self.config_entry.entry_id)
 
     async def async_step_tariff(self, user_input=None):
         """Replace the tariff schedule one window at a time."""
@@ -327,21 +349,7 @@ class MultiTariffEnergyOptionsFlow(config_entries.OptionsFlow):
                     self._options_tariff_windows.pop()
                     errors["base"] = f"tariff_schedule_{schedule_errors[0]}"
                 else:
-                    runtime = self.hass.data.get(DOMAIN, {}).get(
-                        self.config_entry.entry_id, {}
-                    )
-                    coordinator = runtime.get(DATA_COORDINATOR)
-                    if coordinator is not None:
-                        await coordinator.async_snapshot_sources()
-                    new_data = dict(self.config_entry.data)
-                    new_data.update(self._options_base_data)
-                    new_data[CONF_TARIFF_WINDOWS] = self._options_tariff_windows
-                    self.hass.config_entries.async_update_entry(
-                        self.config_entry, data=new_data
-                    )
-                    await self.hass.config_entries.async_reload(
-                        self.config_entry.entry_id
-                    )
+                    await self._async_save_options(self._options_tariff_windows)
                     return self.async_create_entry(title="", data={})
         return self.async_show_form(
             step_id="tariff",
