@@ -34,7 +34,8 @@
       "tariff_schedule_gap": "The tariff windows must cover the full 24-hour day.",
       "tariff_schedule_overlap": "Tariff windows cannot overlap.",
       "tariff_schedule_zero_length": "A tariff window must have a start and end time.",
-      "tariff_schedule_no_tariffs": "Add at least one tariff window."
+      "tariff_schedule_no_tariffs": "Add at least one tariff window.",
+      "tariff_name_required": "Enter a tariff name."
     }
   }
 }
