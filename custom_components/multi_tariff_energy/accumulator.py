@@ -119,6 +119,9 @@ class AccountingState:
     yesterday: PeriodTotals = field(default_factory=PeriodTotals)
     month_totals: PeriodTotals = field(default_factory=PeriodTotals)
     last_month: PeriodTotals = field(default_factory=PeriodTotals)
+    billing_cycle: PeriodTotals = field(default_factory=PeriodTotals)
+    previous_billing_cycle: PeriodTotals = field(default_factory=PeriodTotals)
+    billing_cycle_start: str | None = None
     import_meter: MeterTracker = field(default_factory=MeterTracker)
     export_meter: MeterTracker = field(default_factory=MeterTracker)
     solar_meter: MeterTracker = field(default_factory=MeterTracker)
@@ -141,6 +144,25 @@ class AccountingState:
             self.last_month = self.month_totals
             self.month_totals = PeriodTotals()
             self.month = month_key
+
+    def rollover_billing_cycle(self, today: date, billing_day: int) -> None:
+        """Roll billing totals when the configured billing day is reached."""
+        if today.day >= billing_day:
+            cycle_start = today.replace(day=billing_day)
+        else:
+            if today.month == 1:
+                cycle_start = today.replace(
+                    year=today.year - 1, month=12, day=billing_day
+                )
+            else:
+                cycle_start = today.replace(month=today.month - 1, day=billing_day)
+        cycle_key = cycle_start.isoformat()
+        if self.billing_cycle_start is None:
+            self.billing_cycle_start = cycle_key
+        elif self.billing_cycle_start != cycle_key:
+            self.previous_billing_cycle = self.billing_cycle
+            self.billing_cycle = PeriodTotals()
+            self.billing_cycle_start = cycle_key
 
     def apply_standing_charge(
         self,
@@ -212,6 +234,11 @@ def accounting_state_from_storage(data: dict[str, Any]) -> AccountingState:
         yesterday=_period_totals_from_dict(data.get("yesterday", {})),
         month_totals=_period_totals_from_dict(data.get("month_totals", {})),
         last_month=_period_totals_from_dict(data.get("last_month", {})),
+        billing_cycle=_period_totals_from_dict(data.get("billing_cycle", {})),
+        previous_billing_cycle=_period_totals_from_dict(
+            data.get("previous_billing_cycle", {})
+        ),
+        billing_cycle_start=data.get("billing_cycle_start"),
         import_meter=MeterTracker(
             decimal_value(data.get("import_meter", {}).get("last_value"))
         ),
