@@ -205,7 +205,9 @@ class MultiTariffEnergyCoordinator:
     def value(self, key: str) -> Any:
         """Return a runtime sensor value."""
         today = self.state.today
+        yesterday = self.state.yesterday
         month = self.state.month_totals
+        last_month = self.state.last_month
         now = dt_util.now()
         current_tariff = active_tariff(self.tariffs, now)
         next_change = next_tariff_change(self.tariffs, now)
@@ -223,6 +225,14 @@ class MultiTariffEnergyCoordinator:
             "standing_charge_today": today.standing_charge,
             "vat_today": today.vat,
             "net_cost_today": today.net_cost,
+            "import_yesterday": yesterday.import_kwh,
+            "export_yesterday": yesterday.export_kwh,
+            "solar_yesterday": yesterday.solar_kwh,
+            "buy_cost_yesterday": yesterday.import_cost,
+            "export_credit_yesterday": yesterday.export_credit,
+            "standing_charge_yesterday": yesterday.standing_charge,
+            "vat_yesterday": yesterday.vat,
+            "net_cost_yesterday": yesterday.net_cost,
             "import_month": month.import_kwh,
             "export_month": month.export_kwh,
             "solar_month": month.solar_kwh,
@@ -231,6 +241,14 @@ class MultiTariffEnergyCoordinator:
             "standing_charge_month": month.standing_charge,
             "vat_month": month.vat,
             "net_cost_month": month.net_cost,
+            "import_last_month": last_month.import_kwh,
+            "export_last_month": last_month.export_kwh,
+            "solar_last_month": last_month.solar_kwh,
+            "buy_cost_last_month": last_month.import_cost,
+            "export_credit_last_month": last_month.export_credit,
+            "standing_charge_last_month": last_month.standing_charge,
+            "vat_last_month": last_month.vat,
+            "net_cost_last_month": last_month.net_cost,
         }
         for tariff_name in dict.fromkeys(period.name for period in self.tariffs):
             slug = tariff_name.lower().replace(" ", "_")
