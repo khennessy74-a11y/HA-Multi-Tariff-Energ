@@ -7,7 +7,10 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant, callback
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import (
+    async_track_state_change_event,
+    async_track_time_change,
+)
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
@@ -43,6 +46,7 @@ class MultiTariffEnergyCoordinator:
         self.tariffs = tariffs or []
         self.state = AccountingState.create(dt_util.now().date())
         self._remove_listener = None
+        self._remove_midnight_listener = None
         self._store: Store[dict[str, Any]] = Store(
             hass, 1, f"multi_tariff_energy.{entry.entry_id}"
         )
@@ -60,6 +64,9 @@ class MultiTariffEnergyCoordinator:
         solar = self.entry.data.get(CONF_SOLAR_ENERGY_ENTITY)
         if solar:
             entity_ids.append(solar)
+        self._remove_midnight_listener = async_track_time_change(
+            self.hass, self._async_midnight, hour=0, minute=0, second=0
+        )
         self._remove_listener = async_track_state_change_event(
             self.hass, entity_ids, self._async_source_changed
         )
@@ -70,6 +77,9 @@ class MultiTariffEnergyCoordinator:
     async def async_stop(self) -> None:
         """Stop observing source sensors."""
         await self._async_save()
+        if self._remove_midnight_listener is not None:
+            self._remove_midnight_listener()
+            self._remove_midnight_listener = None
         if self._remove_listener is not None:
             self._remove_listener()
             self._remove_listener = None
