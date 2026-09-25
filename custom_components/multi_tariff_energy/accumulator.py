@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -141,11 +141,21 @@ class AccountingState:
         day_key = today.isoformat()
         month_key = today.strftime("%Y-%m")
         if self.day != day_key:
-            self.yesterday = self.today
+            previous_day = date.fromisoformat(self.day)
+            self.yesterday = (
+                self.today
+                if previous_day == today - timedelta(days=1)
+                else PeriodTotals()
+            )
             self.today = PeriodTotals()
             self.day = day_key
         if self.month != month_key:
-            self.last_month = self.month_totals
+            previous_month = (
+                today.replace(day=1) - timedelta(days=1)
+            ).strftime("%Y-%m")
+            self.last_month = (
+                self.month_totals if self.month == previous_month else PeriodTotals()
+            )
             self.month_totals = PeriodTotals()
             self.month = month_key
 
