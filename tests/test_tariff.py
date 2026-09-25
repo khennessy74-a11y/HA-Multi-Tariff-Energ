@@ -113,3 +113,75 @@ def test_next_tariff_change_crosses_midnight():
     when, tariff = change
     assert when == datetime(2026, 9, 26, 8, 0)
     assert tariff.name == "Day"
+
+
+
+def test_validate_complete_tariff_schedule():
+    """Accept a complete schedule with a repeated tariff name."""
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.tariff import (
+        TariffPeriod,
+        parse_time,
+        validate_tariff_periods,
+    )
+
+    periods = [
+        TariffPeriod("Day", parse_time("08:00"), parse_time("17:00"), Decimal("0.30")),
+        TariffPeriod("Peak", parse_time("17:00"), parse_time("19:00"), Decimal("0.42")),
+        TariffPeriod("Day", parse_time("19:00"), parse_time("23:00"), Decimal("0.30")),
+        TariffPeriod("Night", parse_time("23:00"), parse_time("08:00"), Decimal("0.15")),
+    ]
+    assert validate_tariff_periods(periods) == []
+
+
+def test_validate_tariff_schedule_gap():
+    """Reject a schedule with uncovered time."""
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.tariff import (
+        TariffPeriod,
+        parse_time,
+        validate_tariff_periods,
+    )
+
+    periods = [
+        TariffPeriod("Day", parse_time("08:00"), parse_time("17:00"), Decimal("0.30")),
+        TariffPeriod("Night", parse_time("23:00"), parse_time("08:00"), Decimal("0.15")),
+    ]
+    assert "gap" in validate_tariff_periods(periods)
+
+
+def test_validate_tariff_schedule_overlap():
+    """Reject overlapping tariff windows."""
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.tariff import (
+        TariffPeriod,
+        parse_time,
+        validate_tariff_periods,
+    )
+
+    periods = [
+        TariffPeriod("Day", parse_time("08:00"), parse_time("20:00"), Decimal("0.30")),
+        TariffPeriod("Night", parse_time("19:00"), parse_time("08:00"), Decimal("0.15")),
+    ]
+    assert "overlap" in validate_tariff_periods(periods)
+
+
+def test_validate_zero_length_tariff():
+    """Reject a tariff whose start and end are identical."""
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.tariff import (
+        TariffPeriod,
+        parse_time,
+        validate_tariff_periods,
+    )
+
+    periods = [
+        TariffPeriod("Day", parse_time("08:00"), parse_time("08:00"), Decimal("0.30")),
+    ]
+    errors = validate_tariff_periods(periods)
+    assert "zero_length" in errors
+    assert "gap" in errors
