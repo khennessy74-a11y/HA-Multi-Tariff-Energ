@@ -70,13 +70,13 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(CONF_NAME, default=DEFAULT_NAME): str,
                 vol.Required(CONF_IMPORT_ENERGY_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
+                    selector.EntitySelectorConfig(domain="sensor", device_class="energy")
                 ),
                 vol.Required(CONF_EXPORT_ENERGY_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
+                    selector.EntitySelectorConfig(domain="sensor", device_class="energy")
                 ),
                 vol.Optional(CONF_SOLAR_ENERGY_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
+                    selector.EntitySelectorConfig(domain="sensor", device_class="energy")
                 ),
                 vol.Required(
                     CONF_STANDING_CHARGE, default=DEFAULT_STANDING_CHARGE
@@ -220,19 +220,19 @@ class MultiTariffEnergyOptionsFlow(config_entries.OptionsFlow):
                     CONF_IMPORT_ENERGY_ENTITY,
                     default=data.get(CONF_IMPORT_ENERGY_ENTITY),
                 ): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
+                    selector.EntitySelectorConfig(domain="sensor", device_class="energy")
                 ),
                 vol.Required(
                     CONF_EXPORT_ENERGY_ENTITY,
                     default=data.get(CONF_EXPORT_ENERGY_ENTITY),
                 ): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
+                    selector.EntitySelectorConfig(domain="sensor", device_class="energy")
                 ),
                 vol.Optional(
                     CONF_SOLAR_ENERGY_ENTITY,
                     default=data.get(CONF_SOLAR_ENERGY_ENTITY),
                 ): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
+                    selector.EntitySelectorConfig(domain="sensor", device_class="energy")
                 ),
                 vol.Required(
                     CONF_STANDING_CHARGE,
