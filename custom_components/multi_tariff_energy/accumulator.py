@@ -37,13 +37,28 @@ class PeriodTotals:
         """Return net cost after export credit."""
         return self.import_cost + self.standing_charge + self.vat - self.export_credit
 
-    def add_import(self, tariff: str, delta: Decimal, rate: Decimal) -> None:
-        """Add imported energy at a tariff rate."""
+    def add_import(
+        self,
+        tariff: str,
+        delta: Decimal,
+        rate: Decimal,
+        vat_percent: Decimal = ZERO,
+        rate_includes_vat: bool = False,
+        vat_applies: bool = True,
+    ) -> None:
+        """Add imported energy at a tariff rate with explicit VAT handling."""
         if delta <= ZERO:
             return
         cost = delta * rate
+        vat = ZERO
+        if vat_applies and vat_percent > ZERO:
+            if rate_includes_vat:
+                vat = cost - cost / (Decimal("1") + vat_percent / Decimal("100"))
+            else:
+                vat = cost * vat_percent / Decimal("100")
         self.import_kwh += delta
         self.import_cost += cost
+        self.vat += vat
         self.tariff_import_kwh[tariff] = (
             self.tariff_import_kwh.get(tariff, ZERO) + delta
         )
@@ -120,13 +135,16 @@ class AccountingState:
         today: date,
         charge: Decimal,
         vat_percent: Decimal,
+        vat_applies: bool = True,
     ) -> None:
         """Apply the standing charge exactly once per local calendar day."""
         self.rollover(today)
         day_key = today.isoformat()
         if self.standing_charge_applied_day == day_key:
             return
-        vat = charge * vat_percent / Decimal("100")
+        vat = (
+            charge * vat_percent / Decimal("100") if vat_applies else ZERO
+        )
         for totals in (self.today, self.month_totals):
             totals.standing_charge += charge
             totals.vat += vat
