@@ -9,8 +9,6 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
 from homeassistant.helpers import selector
 
-from .tariff import TariffPeriod, parse_time, validate_tariff_periods
-
 from .const import (
     CONF_BILLING_DAY,
     CONF_CURRENCY,
@@ -28,6 +26,7 @@ from .const import (
     DEFAULT_VAT_RATE,
     DOMAIN,
 )
+from .tariff import TariffPeriod, parse_time, validate_tariff_periods
 
 CONF_TARIFF_WINDOWS = "tariff_windows"
 CONF_TARIFF_NAME = "tariff_name"
