@@ -63,3 +63,53 @@ def test_multiple_windows_same_tariff() -> None:
     assert active_tariff(periods, datetime(2026, 9, 25, 18, 0)).name == "Peak"
     assert active_tariff(periods, datetime(2026, 9, 25, 20, 0)).name == "Day"
     assert active_tariff(periods, datetime(2026, 9, 25, 1, 0)).name == "Night"
+
+
+
+def test_next_tariff_change_with_repeated_named_window():
+    """Find the next boundary even when a tariff name has multiple windows."""
+    from datetime import datetime
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.tariff import (
+        TariffPeriod,
+        next_tariff_change,
+        parse_time,
+    )
+
+    periods = [
+        TariffPeriod("Day", parse_time("08:00"), parse_time("17:00"), Decimal("0.30")),
+        TariffPeriod("Peak", parse_time("17:00"), parse_time("19:00"), Decimal("0.42")),
+        TariffPeriod("Day", parse_time("19:00"), parse_time("23:00"), Decimal("0.30")),
+        TariffPeriod("Night", parse_time("23:00"), parse_time("08:00"), Decimal("0.15")),
+    ]
+
+    change = next_tariff_change(periods, datetime(2026, 9, 25, 16, 30))
+    assert change is not None
+    when, tariff = change
+    assert when == datetime(2026, 9, 25, 17, 0)
+    assert tariff.name == "Peak"
+    assert tariff.rate == Decimal("0.42")
+
+
+def test_next_tariff_change_crosses_midnight():
+    """Find the next boundary across a local midnight."""
+    from datetime import datetime
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.tariff import (
+        TariffPeriod,
+        next_tariff_change,
+        parse_time,
+    )
+
+    periods = [
+        TariffPeriod("Day", parse_time("08:00"), parse_time("23:00"), Decimal("0.30")),
+        TariffPeriod("Night", parse_time("23:00"), parse_time("08:00"), Decimal("0.15")),
+    ]
+
+    change = next_tariff_change(periods, datetime(2026, 9, 25, 23, 30))
+    assert change is not None
+    when, tariff = change
+    assert when == datetime(2026, 9, 26, 8, 0)
+    assert tariff.name == "Day"
