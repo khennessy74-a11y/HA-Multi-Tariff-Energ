@@ -27,7 +27,7 @@ from .const import (
     CONF_STANDING_CHARGE,
     CONF_VAT_RATE,
 )
-from .tariff import TariffPeriod, active_tariff
+from .tariff import TariffPeriod, active_tariff, next_tariff_change
 
 DATA_COORDINATOR = "coordinator"
 
@@ -153,7 +153,15 @@ class MultiTariffEnergyCoordinator:
         """Return a runtime sensor value."""
         today = self.state.today
         month = self.state.month_totals
+        now = dt_util.now()
+        current_tariff = active_tariff(self.tariffs, now)
+        next_change = next_tariff_change(self.tariffs, now)
         values = {
+            "current_tariff": current_tariff.name if current_tariff else None,
+            "current_rate": current_tariff.rate if current_tariff else None,
+            "next_tariff": next_change[1].name if next_change else None,
+            "next_rate": next_change[1].rate if next_change else None,
+            "next_rate_change": next_change[0] if next_change else None,
             "import_today": today.import_kwh,
             "export_today": today.export_kwh,
             "solar_today": today.solar_kwh,
