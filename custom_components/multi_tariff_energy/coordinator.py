@@ -47,9 +47,27 @@ class MultiTariffEnergyCoordinator:
         self.state = AccountingState.create(dt_util.now().date())
         self._remove_listener = None
         self._remove_midnight_listener = None
+        self._listeners: list = []
         self._store: Store[dict[str, Any]] = Store(
             hass, 1, f"multi_tariff_energy.{entry.entry_id}"
         )
+
+    @callback
+    def async_add_listener(self, listener) -> callable:
+        """Register a listener for accounting value changes."""
+        self._listeners.append(listener)
+
+        def remove_listener() -> None:
+            if listener in self._listeners:
+                self._listeners.remove(listener)
+
+        return remove_listener
+
+    @callback
+    def _notify_listeners(self) -> None:
+        """Notify entities that accounting values changed."""
+        for listener in list(self._listeners):
+            listener()
 
     async def async_start(self) -> None:
         """Start observing configured source sensors."""
@@ -96,6 +114,7 @@ class MultiTariffEnergyCoordinator:
         """Process a source meter state change."""
         self._apply_daily_charge()
         self._process_entity(event.data["entity_id"])
+        self._notify_listeners()
         self.hass.async_create_task(self._async_save())
 
     def _process_entity(self, entity_id: str) -> None:
