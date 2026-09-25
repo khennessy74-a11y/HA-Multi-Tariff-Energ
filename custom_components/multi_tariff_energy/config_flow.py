@@ -203,16 +203,15 @@ class MultiTariffEnergyOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry) -> None:
         """Initialize options flow."""
         self.config_entry = config_entry
+        self._options_base_data: dict[str, Any] = {}
+        self._options_tariff_windows: list[dict[str, Any]] = []
 
     async def async_step_init(self, user_input=None):
         """Edit billing settings without recreating the integration."""
         if user_input is not None:
-            new_data = dict(self.config_entry.data)
-            new_data.update(user_input)
-            self.hass.config_entries.async_update_entry(
-                self.config_entry, data=new_data
-            )
-            return self.async_create_entry(title="", data={})
+            self._options_base_data = dict(user_input)
+            self._options_tariff_windows = []
+            return await self.async_step_tariff()
 
         data = self.config_entry.data
         schema = vol.Schema(
@@ -271,3 +270,75 @@ class MultiTariffEnergyOptionsFlow(config_entries.OptionsFlow):
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)
+
+
+    async def async_step_tariff(self, user_input=None):
+        """Replace the tariff schedule one window at a time."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            name = user_input[CONF_TARIFF_NAME].strip()
+            start = user_input[CONF_TARIFF_START]
+            end = user_input[CONF_TARIFF_END]
+            if not name:
+                errors["base"] = "tariff_name_required"
+            else:
+                try:
+                    parse_time(start)
+                    parse_time(end)
+                except (TypeError, ValueError):
+                    errors["base"] = "invalid_tariff_time"
+                if not errors and start == end:
+                    errors["base"] = "tariff_start_equals_end"
+            if not errors:
+                self._options_tariff_windows.append(
+                    {
+                        "name": name,
+                        "start": start,
+                        "end": end,
+                        "rate": user_input[CONF_TARIFF_RATE],
+                    }
+                )
+                if user_input[CONF_ADD_ANOTHER]:
+                    return await self.async_step_tariff()
+                periods = [
+                    TariffPeriod(
+                        name=str(window["name"]),
+                        start=parse_time(str(window["start"])),
+                        end=parse_time(str(window["end"])),
+                        rate=Decimal(str(window["rate"])),
+                    )
+                    for window in self._options_tariff_windows
+                ]
+                schedule_errors = validate_tariff_periods(periods)
+                if schedule_errors:
+                    self._options_tariff_windows.pop()
+                    errors["base"] = f"tariff_schedule_{schedule_errors[0]}"
+                else:
+                    new_data = dict(self.config_entry.data)
+                    new_data.update(self._options_base_data)
+                    new_data[CONF_TARIFF_WINDOWS] = self._options_tariff_windows
+                    self.hass.config_entries.async_update_entry(
+                        self.config_entry, data=new_data
+                    )
+                    await self.hass.config_entries.async_reload(
+                        self.config_entry.entry_id
+                    )
+                    return self.async_create_entry(title="", data={})
+        return self.async_show_form(
+            step_id="tariff",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_TARIFF_NAME): str,
+                    vol.Required(CONF_TARIFF_START): str,
+                    vol.Required(CONF_TARIFF_END): str,
+                    vol.Required(CONF_TARIFF_RATE): vol.All(
+                        vol.Coerce(float), vol.Range(min=0)
+                    ),
+                    vol.Required(CONF_ADD_ANOTHER, default=False): bool,
+                }
+            ),
+            errors=errors,
+            description_placeholders={
+                "count": str(len(self._options_tariff_windows) + 1),
+            },
+        )
