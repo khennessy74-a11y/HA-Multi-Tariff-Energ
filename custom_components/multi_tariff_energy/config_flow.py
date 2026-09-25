@@ -84,6 +84,20 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
+    def _tariff_schema(self) -> vol.Schema:
+        """Return the schema for one tariff window."""
+        return vol.Schema(
+            {
+                vol.Required(CONF_TARIFF_NAME): str,
+                vol.Required(CONF_TARIFF_START): str,
+                vol.Required(CONF_TARIFF_END): str,
+                vol.Required(CONF_TARIFF_RATE): vol.All(
+                    vol.Coerce(float), vol.Range(min=0)
+                ),
+                vol.Required(CONF_ADD_ANOTHER, default=False): bool,
+            }
+        )
+
     async def async_step_tariff(self, user_input=None):
         """Add one tariff time window at a time."""
         errors: dict[str, str] = {}
@@ -91,6 +105,19 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             start = user_input[CONF_TARIFF_START]
             end = user_input[CONF_TARIFF_END]
+            try:
+                parse_time(start)
+                parse_time(end)
+            except (TypeError, ValueError):
+                errors["base"] = "invalid_tariff_time"
+                return self.async_show_form(
+                    step_id="tariff",
+                    data_schema=self._tariff_schema(),
+                    errors=errors,
+                    description_placeholders={
+                        "count": str(len(self._tariff_windows) + 1),
+                    },
+                )
             if start == end:
                 errors["base"] = "tariff_start_equals_end"
             else:
@@ -126,17 +153,7 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         data=data,
                     )
 
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_TARIFF_NAME): str,
-                vol.Required(CONF_TARIFF_START): str,
-                vol.Required(CONF_TARIFF_END): str,
-                vol.Required(CONF_TARIFF_RATE): vol.All(
-                    vol.Coerce(float), vol.Range(min=0)
-                ),
-                vol.Required(CONF_ADD_ANOTHER, default=False): bool,
-            }
-        )
+        schema = self._tariff_schema()
         return self.async_show_form(
             step_id="tariff",
             data_schema=schema,
