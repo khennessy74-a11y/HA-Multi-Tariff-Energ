@@ -201,3 +201,23 @@ def test_standing_charge_is_included_once_in_billing_cycle():
     assert state.billing_cycle.vat == Decimal("0.06")
     assert state.billing_cycle.vat_added == Decimal("0.06")
     assert state.billing_cycle.net_cost == Decimal("0.66")
+
+
+def test_source_change_rebaselines_only_changed_meter():
+    """Changing a cumulative source cannot create an artificial energy delta."""
+    state = AccountingState.create(date(2026, 9, 25))
+    state.import_meter.last_value = Decimal("1000")
+    state.export_meter.last_value = Decimal("500")
+    state.sync_source_entities("sensor.import_a", "sensor.export_a", None)
+
+    # First source-id migration preserves existing legacy baselines.
+    assert state.import_meter.last_value == Decimal("1000")
+    assert state.export_meter.last_value == Decimal("500")
+
+    state.sync_source_entities("sensor.import_b", "sensor.export_a", None)
+    assert state.import_meter.last_value is None
+    assert state.export_meter.last_value == Decimal("500")
+
+    # The first reading from the replacement source becomes its baseline.
+    assert state.import_meter.update(Decimal("42")) == Decimal("0")
+    assert state.import_meter.update(Decimal("43.25")) == Decimal("1.25")
