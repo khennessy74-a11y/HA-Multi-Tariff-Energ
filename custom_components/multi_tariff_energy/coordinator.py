@@ -44,7 +44,7 @@ class MultiTariffEnergyCoordinator:
         self.state = AccountingState.create(dt_util.now().date())
         self._remove_listener = None
         self._store: Store[dict[str, Any]] = Store(
-            hass, 1, f\"multi_tariff_energy.{entry.entry_id}\"
+            hass, 1, f"multi_tariff_energy.{entry.entry_id}"
         )
 
     async def async_start(self) -> None:
