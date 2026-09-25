@@ -23,8 +23,11 @@ from .const import (
     CONF_EXPORT_ENERGY_ENTITY,
     CONF_EXPORT_RATE,
     CONF_IMPORT_ENERGY_ENTITY,
+    CONF_RATES_INCLUDE_VAT,
     CONF_SOLAR_ENERGY_ENTITY,
     CONF_STANDING_CHARGE,
+    CONF_VAT_ON_IMPORT,
+    CONF_VAT_ON_STANDING_CHARGE,
     CONF_VAT_RATE,
 )
 from .tariff import TariffPeriod, active_tariff, next_tariff_change
@@ -107,6 +110,7 @@ class MultiTariffEnergyCoordinator:
             dt_util.now().date(),
             Decimal(str(self.entry.data.get(CONF_STANDING_CHARGE, 0))),
             Decimal(str(self.entry.data.get(CONF_VAT_RATE, 0))),
+            bool(self.entry.data.get(CONF_VAT_ON_STANDING_CHARGE, True)),
         )
 
     @callback
@@ -127,9 +131,26 @@ class MultiTariffEnergyCoordinator:
             delta = self.state.import_meter.update(current)
             tariff = active_tariff(self.tariffs, dt_util.now())
             if tariff is not None:
-                self.state.today.add_import(tariff.name, delta, tariff.rate)
+                vat_rate = Decimal(str(self.entry.data.get(CONF_VAT_RATE, 0)))
+                rate_includes_vat = bool(
+                    self.entry.data.get(CONF_RATES_INCLUDE_VAT, False)
+                )
+                vat_applies = bool(self.entry.data.get(CONF_VAT_ON_IMPORT, True))
+                self.state.today.add_import(
+                    tariff.name,
+                    delta,
+                    tariff.rate,
+                    vat_rate,
+                    rate_includes_vat,
+                    vat_applies,
+                )
                 self.state.month_totals.add_import(
-                    tariff.name, delta, tariff.rate
+                    tariff.name,
+                    delta,
+                    tariff.rate,
+                    vat_rate,
+                    rate_includes_vat,
+                    vat_applies,
                 )
             return
 
