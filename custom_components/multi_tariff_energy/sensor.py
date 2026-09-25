@@ -108,10 +108,11 @@ class MultiTariffEnergySensor(SensorEntity):
         self.coordinator = coordinator
         self.entity_description = description
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
+        currency = entry.data.get("currency", "EUR")
         if description.device_class == SensorDeviceClass.MONETARY:
-            self._attr_native_unit_of_measurement = entry.data.get(
-                "currency", "EUR"
-            )
+            self._attr_native_unit_of_measurement = currency
+        elif description.key in {"current_rate", "next_rate"}:
+            self._attr_native_unit_of_measurement = f"{currency}/kWh"
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to accounting updates."""
