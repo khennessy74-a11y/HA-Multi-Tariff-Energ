@@ -58,14 +58,26 @@ def net_cost(gross_import_cost: Decimal, export_credit: Decimal) -> Decimal:
 
 
 
+
 def tariffs_from_config(data: dict[str, object]) -> list[TariffPeriod]:
-    """Build configured tariff periods from config entry data."""
+    """Build tariff windows from config entry data.
+
+    A tariff name may appear in multiple windows. This lets one logical rate,
+    such as Day, cover several separate periods while accounting totals are
+    still grouped under the same tariff name.
+    """
+    raw_windows = data.get("tariff_windows", [])
+    if not isinstance(raw_windows, list):
+        return []
+
     periods: list[TariffPeriod] = []
-    for number in range(1, 4):
-        name = data.get(f"tariff_{number}_name")
-        start = data.get(f"tariff_{number}_start")
-        end = data.get(f"tariff_{number}_end")
-        rate = data.get(f"tariff_{number}_rate")
+    for window in raw_windows:
+        if not isinstance(window, dict):
+            continue
+        name = window.get("name")
+        start = window.get("start")
+        end = window.get("end")
+        rate = window.get("rate")
         if not all(value is not None for value in (name, start, end, rate)):
             continue
         periods.append(
