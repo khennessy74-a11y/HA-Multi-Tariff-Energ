@@ -82,3 +82,49 @@ def test_accounting_state_storage_round_trip():
     assert restored.export_meter.last_value == Decimal("456.789")
     assert restored.solar_meter.last_value == Decimal("987.654")
     assert restored.standing_charge_applied_day == "2026-09-25"
+
+
+
+def test_import_vat_exclusive():
+    """Add VAT on top when tariff rates exclude VAT."""
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.accumulator import PeriodTotals
+
+    totals = PeriodTotals()
+    totals.add_import(
+        "Day", Decimal("10"), Decimal("0.30"), Decimal("20"), False, True
+    )
+    assert totals.import_cost == Decimal("3.00")
+    assert totals.vat == Decimal("0.60")
+    assert totals.net_cost == Decimal("3.60")
+
+
+def test_import_vat_inclusive_is_not_double_counted():
+    """Extract VAT component without adding it again to an inclusive rate."""
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.accumulator import PeriodTotals
+
+    totals = PeriodTotals()
+    totals.add_import(
+        "Day", Decimal("10"), Decimal("0.36"), Decimal("20"), True, True
+    )
+    assert totals.import_cost == Decimal("3.60")
+    assert totals.vat == Decimal("0.60")
+    assert totals.net_cost == Decimal("4.20")
+
+
+def test_import_vat_can_be_disabled():
+    """Do not account VAT when import VAT is disabled."""
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.accumulator import PeriodTotals
+
+    totals = PeriodTotals()
+    totals.add_import(
+        "Day", Decimal("10"), Decimal("0.30"), Decimal("20"), False, False
+    )
+    assert totals.import_cost == Decimal("3.00")
+    assert totals.vat == Decimal("0")
+    assert totals.net_cost == Decimal("3.00")
