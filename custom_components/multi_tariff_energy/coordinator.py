@@ -7,7 +7,6 @@ from decimal import Decimal
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfEnergy
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.event import (
     async_track_state_change_event,
@@ -16,7 +15,6 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 from homeassistant.util import slugify
-from homeassistant.util.unit_conversion import EnergyConverter
 
 from .accumulator import (
     AccountingState,
@@ -38,6 +36,26 @@ from .const import (
 from .tariff import TariffPeriod, active_tariff, next_tariff_change
 
 DATA_COORDINATOR = "coordinator"
+
+_ENERGY_TO_KWH = {
+    "Wh": Decimal("0.001"),
+    "kWh": Decimal("1"),
+    "MWh": Decimal("1000"),
+    "GWh": Decimal("1000000"),
+}
+
+
+def energy_value_kwh(value: str | None, unit: str | None) -> Decimal | None:
+    """Normalize a cumulative energy reading to kWh without float rounding."""
+    current = decimal_value(value)
+    if current is None:
+        return None
+    if unit is None:
+        return current
+    factor = _ENERGY_TO_KWH.get(unit)
+    if factor is None:
+        return None
+    return current * factor
 
 
 class MultiTariffEnergyCoordinator:
@@ -168,23 +186,12 @@ class MultiTariffEnergyCoordinator:
         self, entity_id: str, tariff_override: TariffPeriod | None = None
     ) -> None:
         source = self.hass.states.get(entity_id)
-        current = decimal_value(source.state if source else None)
+        current = energy_value_kwh(
+            source.state if source else None,
+            source.attributes.get("unit_of_measurement") if source else None,
+        )
         if current is None:
             return
-        unit = source.attributes.get("unit_of_measurement") if source else None
-        if unit and unit != UnitOfEnergy.KILO_WATT_HOUR:
-            try:
-                current = Decimal(
-                    str(
-                        EnergyConverter.convert(
-                            float(current),
-                            unit,
-                            UnitOfEnergy.KILO_WATT_HOUR,
-                        )
-                    )
-                )
-            except (ValueError, TypeError):
-                return
 
         if entity_id == self.entry.data[CONF_IMPORT_ENERGY_ENTITY]:
             delta = self.state.import_meter.update(current)
