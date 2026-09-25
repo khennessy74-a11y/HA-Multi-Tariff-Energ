@@ -89,3 +89,34 @@ def tariffs_from_config(data: dict[str, object]) -> list[TariffPeriod]:
             )
         )
     return periods
+
+
+
+def validate_tariff_periods(periods: list[TariffPeriod]) -> list[str]:
+    """Return validation errors for overlapping or uncovered tariff minutes."""
+    if not periods:
+        return ["no_tariffs"]
+
+    coverage: list[str | None] = [None] * (24 * 60)
+    errors: set[str] = set()
+
+    for period in periods:
+        start = period.start.hour * 60 + period.start.minute
+        end = period.end.hour * 60 + period.end.minute
+        if start == end:
+            errors.add("zero_length")
+            continue
+
+        minutes = (
+            range(start, end)
+            if start < end
+            else list(range(start, 24 * 60)) + list(range(0, end))
+        )
+        for minute in minutes:
+            if coverage[minute] is not None:
+                errors.add("overlap")
+            coverage[minute] = period.name
+
+    if any(value is None for value in coverage):
+        errors.add("gap")
+    return sorted(errors)
