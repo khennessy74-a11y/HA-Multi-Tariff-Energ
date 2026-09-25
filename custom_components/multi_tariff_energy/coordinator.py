@@ -21,6 +21,7 @@ from .accumulator import (
     decimal_value,
 )
 from .const import (
+    CONF_BILLING_DAY,
     CONF_EXPORT_ENERGY_ENTITY,
     CONF_EXPORT_RATE,
     CONF_IMPORT_ENERGY_ENTITY,
@@ -136,8 +137,12 @@ class MultiTariffEnergyCoordinator:
         self.hass.async_create_task(self._async_save())
 
     def _apply_daily_charge(self) -> None:
+        today = dt_util.now().date()
+        self.state.rollover_billing_cycle(
+            today, int(self.entry.data.get(CONF_BILLING_DAY, 1))
+        )
         self.state.apply_standing_charge(
-            dt_util.now().date(),
+            today,
             Decimal(str(self.entry.data.get(CONF_STANDING_CHARGE, 0))),
             Decimal(str(self.entry.data.get(CONF_VAT_RATE, 0))),
             bool(self.entry.data.get(CONF_VAT_ON_STANDING_CHARGE, True)),
@@ -176,6 +181,14 @@ class MultiTariffEnergyCoordinator:
                     rate_includes_vat,
                     vat_applies,
                 )
+                self.state.billing_cycle.add_import(
+                    tariff.name,
+                    delta,
+                    tariff.rate,
+                    vat_rate,
+                    rate_includes_vat,
+                    vat_applies,
+                )
                 self.state.month_totals.add_import(
                     tariff.name,
                     delta,
@@ -191,12 +204,14 @@ class MultiTariffEnergyCoordinator:
             rate = Decimal(str(self.entry.data.get(CONF_EXPORT_RATE, 0)))
             self.state.today.add_export(delta, rate)
             self.state.month_totals.add_export(delta, rate)
+            self.state.billing_cycle.add_export(delta, rate)
             return
 
         if entity_id == self.entry.data.get(CONF_SOLAR_ENERGY_ENTITY):
             delta = self.state.solar_meter.update(current)
             self.state.today.add_solar(delta)
             self.state.month_totals.add_solar(delta)
+            self.state.billing_cycle.add_solar(delta)
 
     async def _async_save(self) -> None:
         """Persist accounting state."""
