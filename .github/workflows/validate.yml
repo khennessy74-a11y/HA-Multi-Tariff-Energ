@@ -2,8 +2,13 @@ name: Validate
 
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
   pull_request:
+    branches: [main]
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
