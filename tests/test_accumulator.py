@@ -112,7 +112,7 @@ def test_import_vat_inclusive_is_not_double_counted():
     )
     assert totals.import_cost == Decimal("3.60")
     assert totals.vat == Decimal("0.60")
-    assert totals.net_cost == Decimal("4.20")
+    assert totals.net_cost == Decimal("3.60")
 
 
 def test_import_vat_can_be_disabled():
