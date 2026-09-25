@@ -82,9 +82,17 @@ MONEY_KEYS = {
 
 INFO_DESCRIPTIONS = (
     MultiTariffSensorDescription(key="current_tariff", name="Current Tariff"),
-    MultiTariffSensorDescription(key="current_rate", name="Current Rate"),
+    MultiTariffSensorDescription(
+        key="current_rate",
+        name="Current Rate",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
     MultiTariffSensorDescription(key="next_tariff", name="Next Tariff"),
-    MultiTariffSensorDescription(key="next_rate", name="Next Rate"),
+    MultiTariffSensorDescription(
+        key="next_rate",
+        name="Next Rate",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
     MultiTariffSensorDescription(
         key="next_rate_change",
         name="Next Rate Change",
