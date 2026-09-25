@@ -1,9 +1,12 @@
 {
   "domain": "multi_tariff_energy",
   "name": "Multi Tariff Energy",
-  "codeowners": ["@khennessy74-a11y"],
+  "codeowners": [
+    "@khennessy74-a11y"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/khennessy74-a11y/HA-Multi-Tariff-Energ",
   "iot_class": "calculated",
-  "version": "0.1.0"
+  "version": "0.1.1",
+  "issue_tracker": "https://github.com/khennessy74-a11y/HA-Multi-Tariff-Energ/issues"
 }
