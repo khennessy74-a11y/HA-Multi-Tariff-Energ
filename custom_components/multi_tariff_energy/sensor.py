@@ -101,6 +101,12 @@ class MultiTariffEnergySensor(SensorEntity):
                 "currency", "EUR"
             )
 
+    async def async_added_to_hass(self) -> None:
+        """Subscribe to accounting updates."""
+        self.async_on_remove(
+            self.coordinator.async_add_listener(self.async_write_ha_state)
+        )
+
     @property
     def native_value(self) -> Any:
         """Return the current accounting value."""
