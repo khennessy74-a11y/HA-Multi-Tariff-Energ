@@ -29,13 +29,19 @@ class PeriodTotals:
     export_credit: Decimal = ZERO
     standing_charge: Decimal = ZERO
     vat: Decimal = ZERO
+    vat_added: Decimal = ZERO
     tariff_import_kwh: dict[str, Decimal] = field(default_factory=dict)
     tariff_import_cost: dict[str, Decimal] = field(default_factory=dict)
 
     @property
     def net_cost(self) -> Decimal:
         """Return net cost after export credit."""
-        return self.import_cost + self.standing_charge + self.vat - self.export_credit
+        return (
+            self.import_cost
+            + self.standing_charge
+            + self.vat_added
+            - self.export_credit
+        )
 
     def add_import(
         self,
@@ -59,6 +65,8 @@ class PeriodTotals:
         self.import_kwh += delta
         self.import_cost += cost
         self.vat += vat
+        if vat_applies and not rate_includes_vat:
+            self.vat_added += vat
         self.tariff_import_kwh[tariff] = (
             self.tariff_import_kwh.get(tariff, ZERO) + delta
         )
@@ -148,6 +156,7 @@ class AccountingState:
         for totals in (self.today, self.month_totals):
             totals.standing_charge += charge
             totals.vat += vat
+            totals.vat_added += vat
         self.standing_charge_applied_day = day_key
 
     def as_storage_dict(self) -> dict[str, Any]:
@@ -173,6 +182,7 @@ def _period_totals_from_dict(data: dict[str, Any]) -> PeriodTotals:
         "export_credit",
         "standing_charge",
         "vat",
+        "vat_added",
     )
     kwargs = {
         field_name: Decimal(str(data.get(field_name, "0")))
