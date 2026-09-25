@@ -179,7 +179,7 @@ class AccountingState:
         vat = (
             charge * vat_percent / Decimal("100") if vat_applies else ZERO
         )
-        for totals in (self.today, self.month_totals):
+        for totals in (self.today, self.month_totals, self.billing_cycle):
             totals.standing_charge += charge
             totals.vat += vat
             totals.vat_added += vat
