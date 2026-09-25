@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -123,9 +124,14 @@ class MultiTariffEnergyCoordinator:
             self._remove_listener = None
 
     @callback
-    def _async_tariff_boundary(self, _now) -> None:
-        """Refresh tariff status sensors exactly when a tariff window changes."""
+    def _async_tariff_boundary(self, now) -> None:
+        """Snapshot source meters before switching to the new tariff window."""
         self._apply_daily_charge()
+        import_entity = self.entry.data[CONF_IMPORT_ENERGY_ENTITY]
+        previous_tariff = active_tariff(
+            self.tariffs, now - timedelta(microseconds=1)
+        )
+        self._process_entity(import_entity, tariff_override=previous_tariff)
         self._notify_listeners()
         self.hass.async_create_task(self._async_save())
 
@@ -145,7 +151,9 @@ class MultiTariffEnergyCoordinator:
         self._notify_listeners()
         self.hass.async_create_task(self._async_save())
 
-    def _process_entity(self, entity_id: str) -> None:
+    def _process_entity(
+        self, entity_id: str, tariff_override: TariffPeriod | None = None
+    ) -> None:
         source = self.hass.states.get(entity_id)
         current = decimal_value(source.state if source else None)
         if current is None:
@@ -153,7 +161,7 @@ class MultiTariffEnergyCoordinator:
 
         if entity_id == self.entry.data[CONF_IMPORT_ENERGY_ENTITY]:
             delta = self.state.import_meter.update(current)
-            tariff = active_tariff(self.tariffs, dt_util.now())
+            tariff = tariff_override or active_tariff(self.tariffs, dt_util.now())
             if tariff is not None:
                 vat_rate = Decimal(str(self.entry.data.get(CONF_VAT_RATE, 0)))
                 rate_includes_vat = bool(
