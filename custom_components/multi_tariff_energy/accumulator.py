@@ -126,6 +126,10 @@ class AccountingState:
     export_meter: MeterTracker = field(default_factory=MeterTracker)
     solar_meter: MeterTracker = field(default_factory=MeterTracker)
     standing_charge_applied_day: str | None = None
+    source_ids_initialized: bool = False
+    import_entity_id: str | None = None
+    export_entity_id: str | None = None
+    solar_entity_id: str | None = None
 
     @classmethod
     def create(cls, today: date) -> AccountingState:
@@ -163,6 +167,29 @@ class AccountingState:
             self.previous_billing_cycle = self.billing_cycle
             self.billing_cycle = PeriodTotals()
             self.billing_cycle_start = cycle_key
+
+    def sync_source_entities(
+        self,
+        import_entity_id: str,
+        export_entity_id: str,
+        solar_entity_id: str | None,
+    ) -> None:
+        """Re-baseline cumulative meters when their configured source changes."""
+        if not self.source_ids_initialized:
+            self.import_entity_id = import_entity_id
+            self.export_entity_id = export_entity_id
+            self.solar_entity_id = solar_entity_id
+            self.source_ids_initialized = True
+            return
+        if self.import_entity_id != import_entity_id:
+            self.import_meter.last_value = None
+        if self.export_entity_id != export_entity_id:
+            self.export_meter.last_value = None
+        if self.solar_entity_id != solar_entity_id:
+            self.solar_meter.last_value = None
+        self.import_entity_id = import_entity_id
+        self.export_entity_id = export_entity_id
+        self.solar_entity_id = solar_entity_id
 
     def apply_standing_charge(
         self,
@@ -249,4 +276,8 @@ def accounting_state_from_storage(data: dict[str, Any]) -> AccountingState:
             decimal_value(data.get("solar_meter", {}).get("last_value"))
         ),
         standing_charge_applied_day=data.get("standing_charge_applied_day"),
+        source_ids_initialized=bool(data.get("source_ids_initialized", False)),
+        import_entity_id=data.get("import_entity_id"),
+        export_entity_id=data.get("export_entity_id"),
+        solar_entity_id=data.get("solar_entity_id"),
     )
