@@ -128,3 +128,25 @@ def test_import_vat_can_be_disabled():
     assert totals.import_cost == Decimal("3.00")
     assert totals.vat == Decimal("0")
     assert totals.net_cost == Decimal("3.00")
+
+
+
+def test_rollover_preserves_previous_periods():
+    """Move completed daily and monthly totals into previous-period snapshots."""
+    from datetime import date
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.accumulator import AccountingState
+
+    state = AccountingState.create(date(2026, 9, 30))
+    state.today.add_import("Day", Decimal("2"), Decimal("0.30"))
+    state.month_totals.add_import("Day", Decimal("20"), Decimal("0.30"))
+
+    state.rollover(date(2026, 10, 1))
+
+    assert state.yesterday.import_kwh == Decimal("2")
+    assert state.yesterday.import_cost == Decimal("0.60")
+    assert state.last_month.import_kwh == Decimal("20")
+    assert state.last_month.import_cost == Decimal("6.00")
+    assert state.today.import_kwh == Decimal("0")
+    assert state.month_totals.import_kwh == Decimal("0")
