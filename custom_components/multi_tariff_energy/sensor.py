@@ -46,7 +46,19 @@ MONEY_KEYS = {
     "net_cost_month": "Net Cost Month",
 }
 
-SENSOR_DESCRIPTIONS = tuple(
+INFO_DESCRIPTIONS = (
+    MultiTariffSensorDescription(key="current_tariff", name="Current Tariff"),
+    MultiTariffSensorDescription(key="current_rate", name="Current Rate"),
+    MultiTariffSensorDescription(key="next_tariff", name="Next Tariff"),
+    MultiTariffSensorDescription(key="next_rate", name="Next Rate"),
+    MultiTariffSensorDescription(
+        key="next_rate_change",
+        name="Next Rate Change",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+)
+
+SENSOR_DESCRIPTIONS = INFO_DESCRIPTIONS + tuple(
     MultiTariffSensorDescription(
         key=key,
         name=name,
