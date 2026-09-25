@@ -51,7 +51,10 @@
           "vat_on_standing_charge": "VAT applies to standing charge",
           "export_rate": "Export rate per kWh",
           "currency": "Currency",
-          "billing_day": "Billing day"
+          "billing_day": "Billing day",
+          "import_energy_entity": "Grid import energy sensor",
+          "export_energy_entity": "Grid export energy sensor",
+          "solar_energy_entity": "Solar production energy sensor (optional)"
         }
       }
     }
