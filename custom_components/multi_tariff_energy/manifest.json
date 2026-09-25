@@ -5,8 +5,8 @@
     "@khennessy74-a11y"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/khennessy74-a11y/HA-Multi-Tariff-Energ",
+  "documentation": "https://github.com/khennessy74-a11y/HA-Multi-Tariff-Energy",
   "iot_class": "calculated",
-  "version": "0.1.1",
-  "issue_tracker": "https://github.com/khennessy74-a11y/HA-Multi-Tariff-Energ/issues"
+  "version": "0.1.2",
+  "issue_tracker": "https://github.com/khennessy74-a11y/HA-Multi-Tariff-Energy/issues"
 }
