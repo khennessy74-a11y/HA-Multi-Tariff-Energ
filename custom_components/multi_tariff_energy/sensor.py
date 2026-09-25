@@ -16,6 +16,7 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import slugify
 
 from .coordinator import DATA_COORDINATOR, MultiTariffEnergyCoordinator
 
@@ -122,7 +123,7 @@ async def async_setup_entry(
     ][DATA_COORDINATOR]
     descriptions = list(SENSOR_DESCRIPTIONS)
     for tariff_name in dict.fromkeys(period.name for period in coordinator.tariffs):
-        slug = tariff_name.lower().replace(" ", "_")
+        slug = slugify(tariff_name)
         descriptions.extend(
             (
                 MultiTariffSensorDescription(
