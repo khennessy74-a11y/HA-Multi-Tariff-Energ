@@ -13,7 +13,8 @@ PLATFORMS: list[str] = ["sensor"]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Multi Tariff Energy from a config entry."""
-    coordinator = MultiTariffEnergyCoordinator(\n        hass, entry, tariffs_from_config(entry.data)\n    )
+    tariffs = tariffs_from_config(entry.data)
+    coordinator = MultiTariffEnergyCoordinator(hass, entry, tariffs)
     await coordinator.async_start()
     entry_data = {DATA_COORDINATOR: coordinator}
     hass.data.setdefault(entry.domain, {})[entry.entry_id] = entry_data
