@@ -50,6 +50,7 @@ class MultiTariffEnergyCoordinator:
         self.state = AccountingState.create(dt_util.now().date())
         self._remove_listener = None
         self._remove_midnight_listener = None
+        self._remove_tariff_listeners: list = []
         self._listeners: list = []
         self._store: Store[dict[str, Any]] = Store(
             hass, 1, f"multi_tariff_energy.{entry.entry_id}"
@@ -91,6 +92,19 @@ class MultiTariffEnergyCoordinator:
         self._remove_listener = async_track_state_change_event(
             self.hass, entity_ids, self._async_source_changed
         )
+        boundary_times = {
+            (period.start.hour, period.start.minute) for period in self.tariffs
+        }
+        for hour, minute in boundary_times:
+            self._remove_tariff_listeners.append(
+                async_track_time_change(
+                    self.hass,
+                    self._async_tariff_boundary,
+                    hour=hour,
+                    minute=minute,
+                    second=0,
+                )
+            )
         for entity_id in entity_ids:
             self._process_entity(entity_id)
         await self._async_save()
@@ -101,9 +115,19 @@ class MultiTariffEnergyCoordinator:
         if self._remove_midnight_listener is not None:
             self._remove_midnight_listener()
             self._remove_midnight_listener = None
+        for remove_listener in self._remove_tariff_listeners:
+            remove_listener()
+        self._remove_tariff_listeners.clear()
         if self._remove_listener is not None:
             self._remove_listener()
             self._remove_listener = None
+
+    @callback
+    def _async_tariff_boundary(self, _now) -> None:
+        """Refresh tariff status sensors exactly when a tariff window changes."""
+        self._apply_daily_charge()
+        self._notify_listeners()
+        self.hass.async_create_task(self._async_save())
 
     def _apply_daily_charge(self) -> None:
         self.state.apply_standing_charge(
