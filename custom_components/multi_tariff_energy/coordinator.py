@@ -232,4 +232,18 @@ class MultiTariffEnergyCoordinator:
             "vat_month": month.vat,
             "net_cost_month": month.net_cost,
         }
+        for tariff_name in dict.fromkeys(period.name for period in self.tariffs):
+            slug = tariff_name.lower().replace(" ", "_")
+            values[f"tariff_{slug}_import_today"] = today.tariff_import_kwh.get(
+                tariff_name, Decimal("0")
+            )
+            values[f"tariff_{slug}_cost_today"] = today.tariff_import_cost.get(
+                tariff_name, Decimal("0")
+            )
+            values[f"tariff_{slug}_import_month"] = month.tariff_import_kwh.get(
+                tariff_name, Decimal("0")
+            )
+            values[f"tariff_{slug}_cost_month"] = month.tariff_import_cost.get(
+                tariff_name, Decimal("0")
+            )
         return values.get(key)
