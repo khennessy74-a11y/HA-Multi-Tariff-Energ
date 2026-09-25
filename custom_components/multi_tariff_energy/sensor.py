@@ -29,9 +29,15 @@ ENERGY_KEYS = {
     "import_today": "Import Today",
     "export_today": "Export Today",
     "solar_today": "Solar Generation Today",
+    "import_yesterday": "Import Yesterday",
+    "export_yesterday": "Export Yesterday",
+    "solar_yesterday": "Solar Generation Yesterday",
     "import_month": "Import Month",
     "export_month": "Export Month",
     "solar_month": "Solar Generation Month",
+    "import_last_month": "Import Last Month",
+    "export_last_month": "Export Last Month",
+    "solar_last_month": "Solar Generation Last Month",
 }
 
 MONEY_KEYS = {
@@ -40,11 +46,21 @@ MONEY_KEYS = {
     "standing_charge_today": "Standing Charge Today",
     "vat_today": "VAT Today",
     "net_cost_today": "Net Cost Today",
+    "buy_cost_yesterday": "Buy Cost Yesterday",
+    "export_credit_yesterday": "Export Credit Yesterday",
+    "standing_charge_yesterday": "Standing Charge Yesterday",
+    "vat_yesterday": "VAT Yesterday",
+    "net_cost_yesterday": "Net Cost Yesterday",
     "buy_cost_month": "Buy Cost Month",
     "export_credit_month": "Export Credit Month",
     "standing_charge_month": "Standing Charge Month",
     "vat_month": "VAT Month",
     "net_cost_month": "Net Cost Month",
+    "buy_cost_last_month": "Buy Cost Last Month",
+    "export_credit_last_month": "Export Credit Last Month",
+    "standing_charge_last_month": "Standing Charge Last Month",
+    "vat_last_month": "VAT Last Month",
+    "net_cost_last_month": "Net Cost Last Month",
 }
 
 INFO_DESCRIPTIONS = (
