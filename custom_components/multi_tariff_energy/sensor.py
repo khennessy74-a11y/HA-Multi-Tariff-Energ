@@ -3,48 +3,66 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
 from typing import Any
 
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import (
-    CONF_CURRENCY,
-    CONF_EXPORT_ENERGY_ENTITY,
-    CONF_EXPORT_RATE,
-    CONF_IMPORT_ENERGY_ENTITY,
-    CONF_STANDING_CHARGE,
-    CONF_VAT_RATE,
-)
+from .coordinator import DATA_COORDINATOR, MultiTariffEnergyCoordinator
 
 
 @dataclass(frozen=True, kw_only=True)
 class MultiTariffSensorDescription(SensorEntityDescription):
-    """Describes a Multi Tariff Energy sensor."""
+    """Describe a Multi Tariff Energy sensor."""
 
 
-SENSOR_DESCRIPTIONS = (
+ENERGY_KEYS = {
+    "import_today": "Import Today",
+    "export_today": "Export Today",
+    "solar_today": "Solar Generation Today",
+    "import_month": "Import Month",
+    "export_month": "Export Month",
+    "solar_month": "Solar Generation Month",
+}
+
+MONEY_KEYS = {
+    "buy_cost_today": "Buy Cost Today",
+    "export_credit_today": "Export Credit Today",
+    "standing_charge_today": "Standing Charge Today",
+    "vat_today": "VAT Today",
+    "net_cost_today": "Net Cost Today",
+    "buy_cost_month": "Buy Cost Month",
+    "export_credit_month": "Export Credit Month",
+    "standing_charge_month": "Standing Charge Month",
+    "vat_month": "VAT Month",
+    "net_cost_month": "Net Cost Month",
+}
+
+SENSOR_DESCRIPTIONS = tuple(
     MultiTariffSensorDescription(
-        key="import_energy_total",
-        name="Import Energy Total",
+        key=key,
+        name=name,
+        device_class=SensorDeviceClass.ENERGY,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        icon="mdi:transmission-tower-import",
-    ),
+        state_class=SensorStateClass.TOTAL,
+    )
+    for key, name in ENERGY_KEYS.items()
+) + tuple(
     MultiTariffSensorDescription(
-        key="export_energy_total",
-        name="Export Energy Total",
-        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        icon="mdi:transmission-tower-export",
-    ),
-    MultiTariffSensorDescription(
-        key="export_value_total",
-        name="Export Value Total",
-        icon="mdi:cash-plus",
-    ),
+        key=key,
+        name=name,
+        device_class=SensorDeviceClass.MONETARY,
+        state_class=SensorStateClass.TOTAL,
+    )
+    for key, name in MONEY_KEYS.items()
 )
 
 
@@ -54,66 +72,36 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Multi Tariff Energy sensors."""
+    coordinator: MultiTariffEnergyCoordinator = hass.data[entry.domain][
+        entry.entry_id
+    ][DATA_COORDINATOR]
     async_add_entities(
-        MultiTariffEnergySensor(hass, entry, description)
+        MultiTariffEnergySensor(entry, coordinator, description)
         for description in SENSOR_DESCRIPTIONS
     )
 
 
 class MultiTariffEnergySensor(SensorEntity):
-    """Representation of a Multi Tariff Energy sensor."""
+    """Expose a value from the accounting coordinator."""
 
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        hass: HomeAssistant,
         entry: ConfigEntry,
+        coordinator: MultiTariffEnergyCoordinator,
         description: MultiTariffSensorDescription,
     ) -> None:
-        self.hass = hass
         self.entry = entry
+        self.coordinator = coordinator
         self.entity_description = description
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
-
-        if description.key == "export_value_total":
-            self._attr_native_unit_of_measurement = entry.data.get(CONF_CURRENCY, "EUR")
-
-    @staticmethod
-    def _decimal_state(state: str | None) -> Decimal | None:
-        if state is None:
-            return None
-        try:
-            return Decimal(state)
-        except (InvalidOperation, TypeError):
-            return None
+        if description.device_class == SensorDeviceClass.MONETARY:
+            self._attr_native_unit_of_measurement = entry.data.get(
+                "currency", "EUR"
+            )
 
     @property
     def native_value(self) -> Any:
-        key = self.entity_description.key
-
-        if key == "import_energy_total":
-            state = self.hass.states.get(self.entry.data[CONF_IMPORT_ENERGY_ENTITY])
-            return self._decimal_state(state.state if state else None)
-
-        if key == "export_energy_total":
-            state = self.hass.states.get(self.entry.data[CONF_EXPORT_ENERGY_ENTITY])
-            return self._decimal_state(state.state if state else None)
-
-        if key == "export_value_total":
-            state = self.hass.states.get(self.entry.data[CONF_EXPORT_ENERGY_ENTITY])
-            energy = self._decimal_state(state.state if state else None)
-            if energy is None:
-                return None
-            rate = Decimal(str(self.entry.data.get(CONF_EXPORT_RATE, 0)))
-            return round(energy * rate, 4)
-
-        return None
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Expose configured billing inputs while the cost engine is built."""
-        return {
-            "standing_charge": self.entry.data.get(CONF_STANDING_CHARGE, 0),
-            "vat_rate": self.entry.data.get(CONF_VAT_RATE, 0),
-        }
+        """Return the current accounting value."""
+        return self.coordinator.value(self.entity_description.key)
