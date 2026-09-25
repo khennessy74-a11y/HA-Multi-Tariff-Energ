@@ -16,14 +16,20 @@ from .const import (
     CONF_EXPORT_ENERGY_ENTITY,
     CONF_EXPORT_RATE,
     CONF_IMPORT_ENERGY_ENTITY,
+    CONF_RATES_INCLUDE_VAT,
     CONF_SOLAR_ENERGY_ENTITY,
     CONF_STANDING_CHARGE,
+    CONF_VAT_ON_IMPORT,
+    CONF_VAT_ON_STANDING_CHARGE,
     CONF_VAT_RATE,
     DEFAULT_BILLING_DAY,
     DEFAULT_CURRENCY,
     DEFAULT_EXPORT_RATE,
     DEFAULT_NAME,
+    DEFAULT_RATES_INCLUDE_VAT,
     DEFAULT_STANDING_CHARGE,
+    DEFAULT_VAT_ON_IMPORT,
+    DEFAULT_VAT_ON_STANDING_CHARGE,
     DEFAULT_VAT_RATE,
     DOMAIN,
 )
@@ -73,6 +79,16 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_VAT_RATE, default=DEFAULT_VAT_RATE): vol.All(
                     vol.Coerce(float), vol.Range(min=0)
                 ),
+                vol.Required(
+                    CONF_RATES_INCLUDE_VAT, default=DEFAULT_RATES_INCLUDE_VAT
+                ): bool,
+                vol.Required(
+                    CONF_VAT_ON_IMPORT, default=DEFAULT_VAT_ON_IMPORT
+                ): bool,
+                vol.Required(
+                    CONF_VAT_ON_STANDING_CHARGE,
+                    default=DEFAULT_VAT_ON_STANDING_CHARGE,
+                ): bool,
                 vol.Required(CONF_EXPORT_RATE, default=DEFAULT_EXPORT_RATE): vol.All(
                     vol.Coerce(float), vol.Range(min=0)
                 ),
