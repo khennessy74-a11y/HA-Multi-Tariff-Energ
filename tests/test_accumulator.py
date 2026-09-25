@@ -221,3 +221,17 @@ def test_source_change_rebaselines_only_changed_meter():
     # The first reading from the replacement source becomes its baseline.
     assert state.import_meter.update(Decimal("42")) == Decimal("0")
     assert state.import_meter.update(Decimal("43.25")) == Decimal("1.25")
+
+
+def test_rollover_clears_stale_previous_periods_after_gap():
+    """Do not label old data as yesterday or last month after a long outage."""
+    state = AccountingState.create(date(2026, 7, 20))
+    state.today.import_kwh = Decimal("2")
+    state.month_totals.import_kwh = Decimal("20")
+
+    state.rollover(date(2026, 9, 25))
+
+    assert state.yesterday.import_kwh == Decimal("0")
+    assert state.last_month.import_kwh == Decimal("0")
+    assert state.day == "2026-09-25"
+    assert state.month == "2026-09"
