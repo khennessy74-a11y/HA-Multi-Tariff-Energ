@@ -183,3 +183,21 @@ def test_billing_cycle_rollover_across_new_year():
     state.rollover_billing_cycle(date(2027, 1, 10), 15)
 
     assert state.billing_cycle_start == "2026-12-15"
+
+
+def test_standing_charge_is_included_once_in_billing_cycle():
+    """Include daily standing charge and VAT in the active billing cycle."""
+    state = AccountingState.create(date(2026, 9, 25))
+    state.rollover_billing_cycle(date(2026, 9, 25), 15)
+
+    state.apply_standing_charge(
+        date(2026, 9, 25), Decimal("0.60"), Decimal("10")
+    )
+    state.apply_standing_charge(
+        date(2026, 9, 25), Decimal("0.60"), Decimal("10")
+    )
+
+    assert state.billing_cycle.standing_charge == Decimal("0.60")
+    assert state.billing_cycle.vat == Decimal("0.06")
+    assert state.billing_cycle.vat_added == Decimal("0.06")
+    assert state.billing_cycle.net_cost == Decimal("0.66")
