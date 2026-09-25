@@ -14,6 +14,7 @@ from homeassistant.helpers.event import (
 )
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
+from homeassistant.util import slugify
 
 from .accumulator import (
     AccountingState,
@@ -289,7 +290,7 @@ class MultiTariffEnergyCoordinator:
             "net_cost_previous_billing_cycle": previous_billing.net_cost,
         }
         for tariff_name in dict.fromkeys(period.name for period in self.tariffs):
-            slug = tariff_name.lower().replace(" ", "_")
+            slug = slugify(tariff_name)
             values[f"tariff_{slug}_import_today"] = today.tariff_import_kwh.get(
                 tariff_name, Decimal("0")
             )
