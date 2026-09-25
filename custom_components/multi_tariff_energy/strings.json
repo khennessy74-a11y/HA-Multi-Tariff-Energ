@@ -45,7 +45,7 @@
     "step": {
       "init": {
         "title": "Billing settings",
-        "description": "Update billing settings without removing the integration.",
+        "description": "Update source and billing settings. Enable tariff editing only when you want to replace the tariff schedule.",
         "data": {
           "standing_charge": "Daily standing charge",
           "vat_rate": "VAT rate (%)",
@@ -57,7 +57,8 @@
           "billing_day": "Billing day",
           "import_energy_entity": "Grid import energy sensor",
           "export_energy_entity": "Grid export energy sensor",
-          "solar_energy_entity": "Solar production energy sensor (optional)"
+          "solar_energy_entity": "Solar production energy sensor (optional)",
+          "edit_tariffs": "Replace tariff schedule"
         }
       },
       "tariff": {
