@@ -3,19 +3,38 @@
     "step": {
       "user": {
         "title": "Multi Tariff Energy",
-        "description": "Select your cumulative grid energy sensors and enter the fixed billing charges.",
+        "description": "Choose the cumulative energy sensors and billing settings.",
         "data": {
           "name": "Name",
-          "import_energy_entity": "Grid import energy entity",
-          "export_energy_entity": "Grid export energy entity",
-          "solar_energy_entity": "Solar production energy entity",
-          "standing_charge": "Standing charge per day",
+          "import_energy_entity": "Grid import energy sensor",
+          "export_energy_entity": "Grid export energy sensor",
+          "solar_energy_entity": "Solar production energy sensor (optional)",
+          "standing_charge": "Daily standing charge",
           "vat_rate": "VAT rate (%)",
           "export_rate": "Export rate per kWh",
           "currency": "Currency",
-          "billing_day": "Billing cycle start day"
+          "billing_day": "Billing day"
+        }
+      },
+      "tariff": {
+        "title": "Tariff window {count}",
+        "description": "Add one import tariff time window. The same tariff name can be used for multiple separate windows.",
+        "data": {
+          "tariff_name": "Tariff name",
+          "tariff_start": "Start time (HH:MM)",
+          "tariff_end": "End time (HH:MM)",
+          "tariff_rate": "Import rate per kWh",
+          "add_another": "Add another tariff window"
         }
       }
+    },
+    "error": {
+      "invalid_tariff_time": "Enter start and end times in 24-hour HH:MM format.",
+      "tariff_start_equals_end": "Start and end time cannot be the same.",
+      "tariff_schedule_gap": "The tariff windows must cover the full 24-hour day.",
+      "tariff_schedule_overlap": "Tariff windows cannot overlap.",
+      "tariff_schedule_zero_length": "A tariff window must have a start and end time.",
+      "tariff_schedule_no_tariffs": "Add at least one tariff window."
     }
   }
 }
