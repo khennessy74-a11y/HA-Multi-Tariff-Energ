@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 
@@ -133,8 +133,6 @@ def next_tariff_change(
     current = active_tariff(periods, when)
     for minutes_ahead in range(1, 24 * 60 + 1):
         candidate = when.replace(second=0, microsecond=0)
-        from datetime import timedelta
-
         candidate += timedelta(minutes=minutes_ahead)
         candidate_tariff = active_tariff(periods, candidate)
         if candidate_tariff is not None and candidate_tariff != current:
