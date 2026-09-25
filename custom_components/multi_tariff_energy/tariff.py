@@ -120,3 +120,23 @@ def validate_tariff_periods(periods: list[TariffPeriod]) -> list[str]:
     if any(value is None for value in coverage):
         errors.add("gap")
     return sorted(errors)
+
+
+
+def next_tariff_change(
+    periods: list[TariffPeriod], when: datetime
+) -> tuple[datetime, TariffPeriod] | None:
+    """Return the next local tariff boundary and tariff active after it."""
+    if not periods:
+        return None
+
+    current = active_tariff(periods, when)
+    for minutes_ahead in range(1, 24 * 60 + 1):
+        candidate = when.replace(second=0, microsecond=0)
+        from datetime import timedelta
+
+        candidate += timedelta(minutes=minutes_ahead)
+        candidate_tariff = active_tariff(periods, candidate)
+        if candidate_tariff is not None and candidate_tariff != current:
+            return candidate, candidate_tariff
+    return None
