@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Multi Tariff Energy",
+        "description": "Select your cumulative grid energy sensors and enter the fixed billing charges.",
+        "data": {
+          "name": "Name",
+          "import_energy_entity": "Grid import energy entity",
+          "export_energy_entity": "Grid export energy entity",
+          "solar_energy_entity": "Solar production energy entity",
+          "standing_charge": "Standing charge per day",
+          "vat_rate": "VAT rate (%)",
+          "export_rate": "Export rate per kWh",
+          "currency": "Currency",
+          "billing_day": "Billing cycle start day"
+        }
+      }
+    }
+  }
+}
