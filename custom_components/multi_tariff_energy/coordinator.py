@@ -11,7 +11,11 @@ from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from .accumulator import (\n    AccountingState,\n    accounting_state_from_storage,\n    decimal_value,\n)
+from .accumulator import (
+    AccountingState,
+    accounting_state_from_storage,
+    decimal_value,
+)
 from .const import (
     CONF_EXPORT_ENERGY_ENTITY,
     CONF_EXPORT_RATE,
@@ -38,7 +42,10 @@ class MultiTariffEnergyCoordinator:
         self.entry = entry
         self.tariffs = tariffs or []
         self.state = AccountingState.create(dt_util.now().date())
-        self._remove_listener = None\n        self._store: Store[dict[str, Any]] = Store(\n            hass, 1, f\"multi_tariff_energy.{entry.entry_id}\"\n        )
+        self._remove_listener = None
+        self._store: Store[dict[str, Any]] = Store(
+            hass, 1, f\"multi_tariff_energy.{entry.entry_id}\"
+        )
 
     async def async_start(self) -> None:
         """Start observing configured source sensors."""
@@ -54,10 +61,12 @@ class MultiTariffEnergyCoordinator:
             self.hass, entity_ids, self._async_source_changed
         )
         for entity_id in entity_ids:
-            self._process_entity(entity_id)\n        await self._async_save()
+            self._process_entity(entity_id)
+        await self._async_save()
 
     async def async_stop(self) -> None:
-        """Stop observing source sensors."""\n        await self._async_save()
+        """Stop observing source sensors."""
+        await self._async_save()
         if self._remove_listener is not None:
             self._remove_listener()
             self._remove_listener = None
@@ -73,7 +82,8 @@ class MultiTariffEnergyCoordinator:
     def _async_source_changed(self, event: Event) -> None:
         """Process a source meter state change."""
         self._apply_daily_charge()
-        self._process_entity(event.data["entity_id"])\n        self.hass.async_create_task(self._async_save())
+        self._process_entity(event.data["entity_id"])
+        self.hass.async_create_task(self._async_save())
 
     def _process_entity(self, entity_id: str) -> None:
         source = self.hass.states.get(entity_id)
