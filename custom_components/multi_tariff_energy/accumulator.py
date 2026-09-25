@@ -174,7 +174,29 @@ class AccountingState:
         if self.billing_cycle_start is None:
             self.billing_cycle_start = cycle_key
         elif self.billing_cycle_start != cycle_key:
-            self.previous_billing_cycle = self.billing_cycle
+            old_cycle_start = date.fromisoformat(self.billing_cycle_start)
+            previous_cycle_end = cycle_start - timedelta(days=1)
+            previous_cycle_start = (
+                previous_cycle_end.replace(day=billing_day)
+                if previous_cycle_end.day >= billing_day
+                else (
+                    previous_cycle_end.replace(
+                        year=previous_cycle_end.year - 1,
+                        month=12,
+                        day=billing_day,
+                    )
+                    if previous_cycle_end.month == 1
+                    else previous_cycle_end.replace(
+                        month=previous_cycle_end.month - 1,
+                        day=billing_day,
+                    )
+                )
+            )
+            self.previous_billing_cycle = (
+                self.billing_cycle
+                if old_cycle_start == previous_cycle_start
+                else PeriodTotals()
+            )
             self.billing_cycle = PeriodTotals()
             self.billing_cycle_start = cycle_key
 
