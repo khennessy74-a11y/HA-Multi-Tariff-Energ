@@ -33,6 +33,7 @@ from .const import (
     DEFAULT_VAT_RATE,
     DOMAIN,
 )
+from .coordinator import DATA_COORDINATOR
 from .tariff import TariffPeriod, parse_time, validate_tariff_periods
 
 CONF_TARIFF_WINDOWS = "tariff_windows"
@@ -326,6 +327,12 @@ class MultiTariffEnergyOptionsFlow(config_entries.OptionsFlow):
                     self._options_tariff_windows.pop()
                     errors["base"] = f"tariff_schedule_{schedule_errors[0]}"
                 else:
+                    runtime = self.hass.data.get(DOMAIN, {}).get(
+                        self.config_entry.entry_id, {}
+                    )
+                    coordinator = runtime.get(DATA_COORDINATOR)
+                    if coordinator is not None:
+                        await coordinator.async_snapshot_sources()
                     new_data = dict(self.config_entry.data)
                     new_data.update(self._options_base_data)
                     new_data[CONF_TARIFF_WINDOWS] = self._options_tariff_windows
