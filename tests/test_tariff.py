@@ -185,3 +185,19 @@ def test_validate_zero_length_tariff():
     errors = validate_tariff_periods(periods)
     assert "zero_length" in errors
     assert "gap" in errors
+
+
+def test_next_tariff_change_skips_adjacent_identical_tariff():
+    """Do not report a boundary when tariff name and rate do not change."""
+    from custom_components.multi_tariff_energy.tariff import next_tariff_change, parse_time
+
+    periods = [
+        TariffPeriod("Day", parse_time("08:00"), parse_time("12:00"), Decimal("0.30")),
+        TariffPeriod("Day", parse_time("12:00"), parse_time("17:00"), Decimal("0.30")),
+        TariffPeriod("Peak", parse_time("17:00"), parse_time("19:00"), Decimal("0.42")),
+        TariffPeriod("Night", parse_time("19:00"), parse_time("08:00"), Decimal("0.15")),
+    ]
+    change = next_tariff_change(periods, datetime(2026, 9, 25, 11, 30))
+    assert change is not None
+    assert change[0] == datetime(2026, 9, 25, 17, 0)
+    assert change[1].name == "Peak"
