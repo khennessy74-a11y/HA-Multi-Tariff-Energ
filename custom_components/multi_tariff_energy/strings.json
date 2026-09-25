@@ -13,7 +13,10 @@
           "vat_rate": "VAT rate (%)",
           "export_rate": "Export rate per kWh",
           "currency": "Currency",
-          "billing_day": "Billing day"
+          "billing_day": "Billing day",
+          "rates_include_vat": "Tariff rates include VAT",
+          "vat_on_import": "VAT applies to imported electricity",
+          "vat_on_standing_charge": "VAT applies to standing charge"
         }
       },
       "tariff": {
@@ -55,6 +58,17 @@
           "import_energy_entity": "Grid import energy sensor",
           "export_energy_entity": "Grid export energy sensor",
           "solar_energy_entity": "Solar production energy sensor (optional)"
+        }
+      },
+      "tariff": {
+        "title": "Replace tariff window {count}",
+        "description": "Enter the replacement import tariff schedule. The full 24-hour day must be covered.",
+        "data": {
+          "tariff_name": "Tariff name",
+          "tariff_start": "Start time (HH:MM)",
+          "tariff_end": "End time (HH:MM)",
+          "tariff_rate": "Import rate per kWh",
+          "add_another": "Add another tariff window"
         }
       }
     }
