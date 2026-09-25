@@ -150,3 +150,36 @@ def test_rollover_preserves_previous_periods():
     assert state.last_month.import_cost == Decimal("6.00")
     assert state.today.import_kwh == Decimal("0")
     assert state.month_totals.import_kwh == Decimal("0")
+
+
+
+def test_billing_cycle_rollover():
+    """Roll billing totals on the configured billing day."""
+    from datetime import date
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.accumulator import AccountingState
+
+    state = AccountingState.create(date(2026, 9, 14))
+    state.rollover_billing_cycle(date(2026, 9, 14), 15)
+    assert state.billing_cycle_start == "2026-08-15"
+
+    state.billing_cycle.add_import("Day", Decimal("12"), Decimal("0.30"))
+    state.rollover_billing_cycle(date(2026, 9, 15), 15)
+
+    assert state.billing_cycle_start == "2026-09-15"
+    assert state.previous_billing_cycle.import_kwh == Decimal("12")
+    assert state.previous_billing_cycle.import_cost == Decimal("3.60")
+    assert state.billing_cycle.import_kwh == Decimal("0")
+
+
+def test_billing_cycle_rollover_across_new_year():
+    """Calculate the previous cycle correctly across January."""
+    from datetime import date
+
+    from custom_components.multi_tariff_energy.accumulator import AccountingState
+
+    state = AccountingState.create(date(2027, 1, 10))
+    state.rollover_billing_cycle(date(2027, 1, 10), 15)
+
+    assert state.billing_cycle_start == "2026-12-15"
