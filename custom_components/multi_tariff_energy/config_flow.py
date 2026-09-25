@@ -48,6 +48,11 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        """Return the options flow."""
+        return MultiTariffEnergyOptionsFlow(config_entry)
+
     def __init__(self) -> None:
         """Initialize the config flow."""
         self._base_data: dict[str, Any] = {}
@@ -189,3 +194,62 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "count": str(len(self._tariff_windows) + 1),
             },
         )
+
+
+
+class MultiTariffEnergyOptionsFlow(config_entries.OptionsFlow):
+    """Handle editable billing options."""
+
+    def __init__(self, config_entry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        """Edit billing settings without recreating the integration."""
+        if user_input is not None:
+            new_data = dict(self.config_entry.data)
+            new_data.update(user_input)
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, data=new_data
+            )
+            return self.async_create_entry(title="", data={})
+
+        data = self.config_entry.data
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_STANDING_CHARGE,
+                    default=data.get(CONF_STANDING_CHARGE, DEFAULT_STANDING_CHARGE),
+                ): vol.Coerce(float),
+                vol.Required(
+                    CONF_VAT_RATE, default=data.get(CONF_VAT_RATE, DEFAULT_VAT_RATE)
+                ): vol.All(vol.Coerce(float), vol.Range(min=0)),
+                vol.Required(
+                    CONF_RATES_INCLUDE_VAT,
+                    default=data.get(CONF_RATES_INCLUDE_VAT, DEFAULT_RATES_INCLUDE_VAT),
+                ): bool,
+                vol.Required(
+                    CONF_VAT_ON_IMPORT,
+                    default=data.get(CONF_VAT_ON_IMPORT, DEFAULT_VAT_ON_IMPORT),
+                ): bool,
+                vol.Required(
+                    CONF_VAT_ON_STANDING_CHARGE,
+                    default=data.get(
+                        CONF_VAT_ON_STANDING_CHARGE,
+                        DEFAULT_VAT_ON_STANDING_CHARGE,
+                    ),
+                ): bool,
+                vol.Required(
+                    CONF_EXPORT_RATE,
+                    default=data.get(CONF_EXPORT_RATE, DEFAULT_EXPORT_RATE),
+                ): vol.All(vol.Coerce(float), vol.Range(min=0)),
+                vol.Required(
+                    CONF_CURRENCY, default=data.get(CONF_CURRENCY, DEFAULT_CURRENCY)
+                ): str,
+                vol.Required(
+                    CONF_BILLING_DAY,
+                    default=data.get(CONF_BILLING_DAY, DEFAULT_BILLING_DAY),
+                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=28)),
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)
