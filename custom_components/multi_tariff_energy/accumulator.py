@@ -100,7 +100,7 @@ class AccountingState:
     standing_charge_applied_day: str | None = None
 
     @classmethod
-    def create(cls, today: date) -> "AccountingState":
+    def create(cls, today: date) -> AccountingState:
         """Create an empty accounting state."""
         return cls(day=today.isoformat(), month=today.strftime("%Y-%m"))
 
