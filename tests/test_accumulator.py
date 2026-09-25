@@ -235,3 +235,15 @@ def test_rollover_clears_stale_previous_periods_after_gap():
     assert state.last_month.import_kwh == Decimal("0")
     assert state.day == "2026-09-25"
     assert state.month == "2026-09"
+
+
+def test_billing_cycle_rollover_clears_stale_cycle_after_gap():
+    """Do not expose an old billing cycle as the immediately previous cycle."""
+    state = AccountingState.create(date(2026, 6, 20))
+    state.rollover_billing_cycle(date(2026, 6, 20), 15)
+    state.billing_cycle.add_import("Day", Decimal("50"), Decimal("0.30"))
+
+    state.rollover_billing_cycle(date(2026, 9, 25), 15)
+
+    assert state.billing_cycle_start == "2026-09-15"
+    assert state.previous_billing_cycle.import_kwh == Decimal("0")
