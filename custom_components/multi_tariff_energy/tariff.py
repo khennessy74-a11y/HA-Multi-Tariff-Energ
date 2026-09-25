@@ -135,6 +135,9 @@ def next_tariff_change(
         candidate = when.replace(second=0, microsecond=0)
         candidate += timedelta(minutes=minutes_ahead)
         candidate_tariff = active_tariff(periods, candidate)
-        if candidate_tariff is not None and candidate_tariff != current:
-            return candidate, candidate_tariff
+        if candidate_tariff is not None:
+            current_identity = (current.name, current.rate) if current else None
+            candidate_identity = (candidate_tariff.name, candidate_tariff.rate)
+            if candidate_identity != current_identity:
+                return candidate, candidate_tariff
     return None
