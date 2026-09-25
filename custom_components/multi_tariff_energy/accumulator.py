@@ -116,7 +116,9 @@ class AccountingState:
     day: str
     month: str
     today: PeriodTotals = field(default_factory=PeriodTotals)
+    yesterday: PeriodTotals = field(default_factory=PeriodTotals)
     month_totals: PeriodTotals = field(default_factory=PeriodTotals)
+    last_month: PeriodTotals = field(default_factory=PeriodTotals)
     import_meter: MeterTracker = field(default_factory=MeterTracker)
     export_meter: MeterTracker = field(default_factory=MeterTracker)
     solar_meter: MeterTracker = field(default_factory=MeterTracker)
@@ -132,9 +134,11 @@ class AccountingState:
         day_key = today.isoformat()
         month_key = today.strftime("%Y-%m")
         if self.day != day_key:
+            self.yesterday = self.today
             self.today = PeriodTotals()
             self.day = day_key
         if self.month != month_key:
+            self.last_month = self.month_totals
             self.month_totals = PeriodTotals()
             self.month = month_key
 
@@ -205,7 +209,9 @@ def accounting_state_from_storage(data: dict[str, Any]) -> AccountingState:
         day=str(data["day"]),
         month=str(data["month"]),
         today=_period_totals_from_dict(data.get("today", {})),
+        yesterday=_period_totals_from_dict(data.get("yesterday", {})),
         month_totals=_period_totals_from_dict(data.get("month_totals", {})),
+        last_month=_period_totals_from_dict(data.get("last_month", {})),
         import_meter=MeterTracker(
             decimal_value(data.get("import_meter", {}).get("last_value"))
         ),
