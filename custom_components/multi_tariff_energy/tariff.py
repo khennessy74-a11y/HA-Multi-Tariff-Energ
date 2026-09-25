@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 
+from homeassistant.util import slugify
+
 
 @dataclass(frozen=True)
 class TariffPeriod:
@@ -119,6 +121,16 @@ def validate_tariff_periods(periods: list[TariffPeriod]) -> list[str]:
 
     if any(value is None for value in coverage):
         errors.add("gap")
+
+    slug_names: dict[str, str] = {}
+    for period in periods:
+        slug = slugify(period.name)
+        existing = slug_names.get(slug)
+        if existing is not None and existing != period.name:
+            errors.add("slug_collision")
+        else:
+            slug_names[slug] = period.name
+
     return sorted(errors)
 
 
