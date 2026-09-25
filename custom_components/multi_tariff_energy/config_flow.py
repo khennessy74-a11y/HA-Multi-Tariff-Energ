@@ -9,6 +9,8 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
 from homeassistant.helpers import selector
 
+from .tariff import TariffPeriod, parse_time, validate_tariff_periods
+
 from .const import (
     CONF_BILLING_DAY,
     CONF_CURRENCY,
@@ -103,12 +105,26 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if user_input[CONF_ADD_ANOTHER]:
                     return await self.async_step_tariff()
 
-                data = dict(self._base_data)
-                data[CONF_TARIFF_WINDOWS] = self._tariff_windows
-                return self.async_create_entry(
-                    title=data[CONF_NAME],
-                    data=data,
-                )
+                periods = [
+                    TariffPeriod(
+                        name=str(window["name"]),
+                        start=parse_time(str(window["start"])),
+                        end=parse_time(str(window["end"])),
+                        rate=__import__("decimal").Decimal(str(window["rate"])),
+                    )
+                    for window in self._tariff_windows
+                ]
+                schedule_errors = validate_tariff_periods(periods)
+                if schedule_errors:
+                    self._tariff_windows.pop()
+                    errors["base"] = f"tariff_schedule_{schedule_errors[0]}"
+                else:
+                    data = dict(self._base_data)
+                    data[CONF_TARIFF_WINDOWS] = self._tariff_windows
+                    return self.async_create_entry(
+                        title=data[CONF_NAME],
+                        data=data,
+                    )
 
         schema = vol.Schema(
             {
