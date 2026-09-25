@@ -88,9 +88,42 @@ async def async_setup_entry(
     coordinator: MultiTariffEnergyCoordinator = hass.data[entry.domain][
         entry.entry_id
     ][DATA_COORDINATOR]
+    descriptions = list(SENSOR_DESCRIPTIONS)
+    for tariff_name in dict.fromkeys(period.name for period in coordinator.tariffs):
+        slug = tariff_name.lower().replace(" ", "_")
+        descriptions.extend(
+            (
+                MultiTariffSensorDescription(
+                    key=f"tariff_{slug}_import_today",
+                    name=f"{tariff_name} Import Today",
+                    device_class=SensorDeviceClass.ENERGY,
+                    native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+                    state_class=SensorStateClass.TOTAL,
+                ),
+                MultiTariffSensorDescription(
+                    key=f"tariff_{slug}_cost_today",
+                    name=f"{tariff_name} Cost Today",
+                    device_class=SensorDeviceClass.MONETARY,
+                    state_class=SensorStateClass.TOTAL,
+                ),
+                MultiTariffSensorDescription(
+                    key=f"tariff_{slug}_import_month",
+                    name=f"{tariff_name} Import Month",
+                    device_class=SensorDeviceClass.ENERGY,
+                    native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+                    state_class=SensorStateClass.TOTAL,
+                ),
+                MultiTariffSensorDescription(
+                    key=f"tariff_{slug}_cost_month",
+                    name=f"{tariff_name} Cost Month",
+                    device_class=SensorDeviceClass.MONETARY,
+                    state_class=SensorStateClass.TOTAL,
+                ),
+            )
+        )
     async_add_entities(
         MultiTariffEnergySensor(entry, coordinator, description)
-        for description in SENSOR_DESCRIPTIONS
+        for description in descriptions
     )
 
 
