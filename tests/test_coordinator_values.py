@@ -4,6 +4,7 @@ from datetime import date
 from decimal import Decimal
 
 from custom_components.multi_tariff_energy.accumulator import AccountingState
+from custom_components.multi_tariff_energy.coordinator import energy_value_kwh
 
 
 def test_expected_daily_and_monthly_totals() -> None:
@@ -19,3 +20,12 @@ def test_expected_daily_and_monthly_totals() -> None:
     assert state.month_totals.import_cost == Decimal("9.00")
     assert state.month_totals.export_credit == Decimal("2.00")
     assert state.month_totals.net_cost == Decimal("7.00")
+
+
+def test_energy_value_kwh_uses_exact_decimal_conversion() -> None:
+    assert energy_value_kwh("1234", "Wh") == Decimal("1.234")
+    assert energy_value_kwh("1.234", "kWh") == Decimal("1.234")
+    assert energy_value_kwh("0.001234", "MWh") == Decimal("1.234000")
+    assert energy_value_kwh("0.000001234", "GWh") == Decimal("1.234000000")
+    assert energy_value_kwh("1.234", None) == Decimal("1.234")
+    assert energy_value_kwh("1", "J") is None
