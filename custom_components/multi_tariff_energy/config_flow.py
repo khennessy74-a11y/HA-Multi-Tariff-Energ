@@ -79,24 +79,6 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     selector.EntitySelectorConfig(domain="sensor")
                 ),
                 vol.Required(
-                    CONF_IMPORT_ENERGY_ENTITY,
-                    default=data.get(CONF_IMPORT_ENERGY_ENTITY),
-                ): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
-                ),
-                vol.Required(
-                    CONF_EXPORT_ENERGY_ENTITY,
-                    default=data.get(CONF_EXPORT_ENERGY_ENTITY),
-                ): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
-                ),
-                vol.Optional(
-                    CONF_SOLAR_ENERGY_ENTITY,
-                    default=data.get(CONF_SOLAR_ENERGY_ENTITY),
-                ): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor")
-                ),
-                vol.Required(
                     CONF_STANDING_CHARGE, default=DEFAULT_STANDING_CHARGE
                 ): vol.Coerce(float),
                 vol.Required(CONF_VAT_RATE, default=DEFAULT_VAT_RATE): vol.All(
@@ -235,6 +217,24 @@ class MultiTariffEnergyOptionsFlow(config_entries.OptionsFlow):
         data = self.config_entry.data
         schema = vol.Schema(
             {
+                vol.Required(
+                    CONF_IMPORT_ENERGY_ENTITY,
+                    default=data.get(CONF_IMPORT_ENERGY_ENTITY),
+                ): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="sensor")
+                ),
+                vol.Required(
+                    CONF_EXPORT_ENERGY_ENTITY,
+                    default=data.get(CONF_EXPORT_ENERGY_ENTITY),
+                ): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="sensor")
+                ),
+                vol.Optional(
+                    CONF_SOLAR_ENERGY_ENTITY,
+                    default=data.get(CONF_SOLAR_ENERGY_ENTITY),
+                ): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="sensor")
+                ),
                 vol.Required(
                     CONF_STANDING_CHARGE,
                     default=data.get(CONF_STANDING_CHARGE, DEFAULT_STANDING_CHARGE),
