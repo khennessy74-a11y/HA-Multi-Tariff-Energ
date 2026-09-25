@@ -7,7 +7,9 @@ from decimal import Decimal
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfEnergy
 from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.util.unit_conversion import EnergyConverter
 from homeassistant.helpers.event import (
     async_track_state_change_event,
     async_track_time_change,
@@ -169,6 +171,20 @@ class MultiTariffEnergyCoordinator:
         current = decimal_value(source.state if source else None)
         if current is None:
             return
+        unit = source.attributes.get("unit_of_measurement") if source else None
+        if unit and unit != UnitOfEnergy.KILO_WATT_HOUR:
+            try:
+                current = Decimal(
+                    str(
+                        EnergyConverter.convert(
+                            float(current),
+                            unit,
+                            UnitOfEnergy.KILO_WATT_HOUR,
+                        )
+                    )
+                )
+            except (ValueError, TypeError):
+                return
 
         if entity_id == self.entry.data[CONF_IMPORT_ENERGY_ENTITY]:
             delta = self.state.import_meter.update(current)
