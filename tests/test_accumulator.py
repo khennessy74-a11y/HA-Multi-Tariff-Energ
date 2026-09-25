@@ -50,3 +50,35 @@ def test_rollover_resets_day_and_month() -> None:
     assert state.month_totals.import_kwh == 0
     assert state.day == "2026-10-01"
     assert state.month == "2026-10"
+
+
+
+def test_accounting_state_storage_round_trip():
+    """Persist and restore exact Decimal totals and meter baselines."""
+    from datetime import date
+    from decimal import Decimal
+
+    from custom_components.multi_tariff_energy.accumulator import (
+        AccountingState,
+        accounting_state_from_storage,
+    )
+
+    state = AccountingState.create(date(2026, 9, 25))
+    state.today.add_import("Day", Decimal("1.234"), Decimal("0.3017"))
+    state.month_totals.add_import("Day", Decimal("9.876"), Decimal("0.3017"))
+    state.today.add_export(Decimal("0.456"), Decimal("0.15"))
+    state.import_meter.last_value = Decimal("12345.6789")
+    state.export_meter.last_value = Decimal("456.789")
+    state.solar_meter.last_value = Decimal("987.654")
+    state.standing_charge_applied_day = "2026-09-25"
+
+    restored = accounting_state_from_storage(state.as_storage_dict())
+
+    assert restored.day == state.day
+    assert restored.month == state.month
+    assert restored.today == state.today
+    assert restored.month_totals == state.month_totals
+    assert restored.import_meter.last_value == Decimal("12345.6789")
+    assert restored.export_meter.last_value == Decimal("456.789")
+    assert restored.solar_meter.last_value == Decimal("987.654")
+    assert restored.standing_charge_applied_day == "2026-09-25"
