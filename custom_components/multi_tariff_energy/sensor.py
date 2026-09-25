@@ -38,6 +38,12 @@ ENERGY_KEYS = {
     "import_last_month": "Import Last Month",
     "export_last_month": "Export Last Month",
     "solar_last_month": "Solar Generation Last Month",
+    "import_billing_cycle": "Import Billing Cycle",
+    "export_billing_cycle": "Export Billing Cycle",
+    "solar_billing_cycle": "Solar Generation Billing Cycle",
+    "import_previous_billing_cycle": "Import Previous Billing Cycle",
+    "export_previous_billing_cycle": "Export Previous Billing Cycle",
+    "solar_previous_billing_cycle": "Solar Generation Previous Billing Cycle",
 }
 
 MONEY_KEYS = {
@@ -61,6 +67,16 @@ MONEY_KEYS = {
     "standing_charge_last_month": "Standing Charge Last Month",
     "vat_last_month": "VAT Last Month",
     "net_cost_last_month": "Net Cost Last Month",
+    "buy_cost_billing_cycle": "Buy Cost Billing Cycle",
+    "export_credit_billing_cycle": "Export Credit Billing Cycle",
+    "standing_charge_billing_cycle": "Standing Charge Billing Cycle",
+    "vat_billing_cycle": "VAT Billing Cycle",
+    "net_cost_billing_cycle": "Net Cost Billing Cycle",
+    "buy_cost_previous_billing_cycle": "Buy Cost Previous Billing Cycle",
+    "export_credit_previous_billing_cycle": "Export Credit Previous Billing Cycle",
+    "standing_charge_previous_billing_cycle": "Standing Charge Previous Billing Cycle",
+    "vat_previous_billing_cycle": "VAT Previous Billing Cycle",
+    "net_cost_previous_billing_cycle": "Net Cost Previous Billing Cycle",
 }
 
 INFO_DESCRIPTIONS = (
