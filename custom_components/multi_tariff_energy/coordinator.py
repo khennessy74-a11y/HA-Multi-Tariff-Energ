@@ -223,6 +223,8 @@ class MultiTariffEnergyCoordinator:
         yesterday = self.state.yesterday
         month = self.state.month_totals
         last_month = self.state.last_month
+        billing = self.state.billing_cycle
+        previous_billing = self.state.previous_billing_cycle
         now = dt_util.now()
         current_tariff = active_tariff(self.tariffs, now)
         next_change = next_tariff_change(self.tariffs, now)
@@ -264,6 +266,22 @@ class MultiTariffEnergyCoordinator:
             "standing_charge_last_month": last_month.standing_charge,
             "vat_last_month": last_month.vat,
             "net_cost_last_month": last_month.net_cost,
+            "import_billing_cycle": billing.import_kwh,
+            "export_billing_cycle": billing.export_kwh,
+            "solar_billing_cycle": billing.solar_kwh,
+            "buy_cost_billing_cycle": billing.import_cost,
+            "export_credit_billing_cycle": billing.export_credit,
+            "standing_charge_billing_cycle": billing.standing_charge,
+            "vat_billing_cycle": billing.vat,
+            "net_cost_billing_cycle": billing.net_cost,
+            "import_previous_billing_cycle": previous_billing.import_kwh,
+            "export_previous_billing_cycle": previous_billing.export_kwh,
+            "solar_previous_billing_cycle": previous_billing.solar_kwh,
+            "buy_cost_previous_billing_cycle": previous_billing.import_cost,
+            "export_credit_previous_billing_cycle": previous_billing.export_credit,
+            "standing_charge_previous_billing_cycle": previous_billing.standing_charge,
+            "vat_previous_billing_cycle": previous_billing.vat,
+            "net_cost_previous_billing_cycle": previous_billing.net_cost,
         }
         for tariff_name in dict.fromkeys(period.name for period in self.tariffs):
             slug = tariff_name.lower().replace(" ", "_")
