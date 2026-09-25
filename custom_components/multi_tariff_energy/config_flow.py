@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 import voluptuous as vol
@@ -109,7 +110,7 @@ class MultiTariffEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         name=str(window["name"]),
                         start=parse_time(str(window["start"])),
                         end=parse_time(str(window["end"])),
-                        rate=__import__("decimal").Decimal(str(window["rate"])),
+                        rate=Decimal(str(window["rate"])),
                     )
                     for window in self._tariff_windows
                 ]
