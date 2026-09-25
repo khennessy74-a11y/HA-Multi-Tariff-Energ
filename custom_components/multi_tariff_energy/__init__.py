@@ -6,13 +6,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .coordinator import DATA_COORDINATOR, MultiTariffEnergyCoordinator
+from .tariff import tariffs_from_config
 
 PLATFORMS: list[str] = ["sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Multi Tariff Energy from a config entry."""
-    coordinator = MultiTariffEnergyCoordinator(hass, entry)
+    coordinator = MultiTariffEnergyCoordinator(\n        hass, entry, tariffs_from_config(entry.data)\n    )
     await coordinator.async_start()
     entry_data = {DATA_COORDINATOR: coordinator}
     hass.data.setdefault(entry.domain, {})[entry.entry_id] = entry_data
