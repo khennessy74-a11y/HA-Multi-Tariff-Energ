@@ -235,6 +235,20 @@ class MultiTariffEnergyCoordinator:
             self.state.month_totals.add_solar(delta)
             self.state.billing_cycle.add_solar(delta)
 
+    async def async_snapshot_sources(self) -> None:
+        """Account for current source readings before configuration changes."""
+        self._apply_daily_charge()
+        entity_ids = [
+            self.entry.data[CONF_IMPORT_ENERGY_ENTITY],
+            self.entry.data[CONF_EXPORT_ENERGY_ENTITY],
+        ]
+        solar = self.entry.data.get(CONF_SOLAR_ENERGY_ENTITY)
+        if solar:
+            entity_ids.append(solar)
+        for entity_id in entity_ids:
+            self._process_entity(entity_id)
+        await self._async_save()
+
     async def _async_save(self) -> None:
         """Persist accounting state."""
         await self._store.async_save(self.state.as_storage_dict())
