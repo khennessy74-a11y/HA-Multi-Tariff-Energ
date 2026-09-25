@@ -49,6 +49,9 @@ class MultiTariffEnergyCoordinator:
 
     async def async_start(self) -> None:
         """Start observing configured source sensors."""
+        stored = await self._store.async_load()
+        if stored:
+            self.state = accounting_state_from_storage(stored)
         self._apply_daily_charge()
         entity_ids = [
             self.entry.data[CONF_IMPORT_ENERGY_ENTITY],
