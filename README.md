@@ -1,4 +1,4 @@
-# HA-Multi-Tariff-Energ
+# HA-Multi-Tariff-Energy
 
 Home Assistant custom integration for tracking electricity costs across multiple time-of-use tariffs using existing cumulative energy sensors.
 
@@ -67,7 +67,7 @@ If the underlying cumulative source sensor has not published a fresh reading at 
 
 ## Installation
 
-This repository is under active development. Until a release package is published, install it manually by copying `custom_components/multi_tariff_energy` into the `custom_components` directory of your Home Assistant configuration and restart Home Assistant.
+Install through HACS as a custom integration repository, or install manually by copying `custom_components/multi_tariff_energy` into the `custom_components` directory of your Home Assistant configuration and restart Home Assistant.
 
 Then go to **Settings → Devices & services → Add integration** and search for **Multi Tariff Energy**.
 
