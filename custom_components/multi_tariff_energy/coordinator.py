@@ -151,6 +151,26 @@ class MultiTariffEnergyCoordinator:
             self._remove_listener = None
 
     @callback
+    def _async_midnight(self, now) -> None:
+        """Snapshot source meters before rolling over to a new local day."""
+        import_entity = self.entry.data[CONF_IMPORT_ENERGY_ENTITY]
+        previous_tariff = active_tariff(
+            self.tariffs, now - timedelta(microseconds=1)
+        )
+        self._process_entity(import_entity, tariff_override=previous_tariff)
+
+        export_entity = self.entry.data[CONF_EXPORT_ENERGY_ENTITY]
+        self._process_entity(export_entity)
+
+        solar_entity = self.entry.data.get(CONF_SOLAR_ENERGY_ENTITY)
+        if solar_entity:
+            self._process_entity(solar_entity)
+
+        self._apply_daily_charge()
+        self._notify_listeners()
+        self.hass.async_create_task(self._async_save())
+
+    @callback
     def _async_tariff_boundary(self, now) -> None:
         """Snapshot source meters before switching to the new tariff window."""
         self._apply_daily_charge()
